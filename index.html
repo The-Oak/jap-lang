@@ -1,0 +1,3251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Транскриптор русский → японский</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .tab.active {
+            background: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                margin-right: 0;
+                margin-bottom: 2px;
+                border-radius: 4px;
+            }
+            
+            .tab.active {
+                margin-bottom: 2px;
+            }
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        
+        .settings-panel {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        select, input[type="range"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .range-value {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: bold;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            resize: vertical;
+            font-family: inherit;
+        }
+        
+        .output-area {
+            position: relative;
+            min-height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            background: white;
+            font-size: 1.2rem;
+            line-height: 1.8;
+            overflow-wrap: break-word;
+            width: 100%;
+        }
+        
+        .kanji-tooltip {
+            position: absolute;
+            background: #2c3e50;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            max-width: 300px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            display: none;
+        }
+        
+        .kanji-hint {
+            border-bottom: 1px dashed #3498db;
+            cursor: help;
+            position: relative;
+        }
+        
+        .button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+        
+        .button:hover {
+            background: #2980b9;
+        }
+        
+        .button:active {
+            transform: translateY(1px);
+        }
+        
+        .stats {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            margin-right: 5px;
+            border-radius: 3px;
+        }
+        
+        .level-1 { background-color: #99FFCC; font-size: 22pt}
+        .level-2 { background-color: #33FF33; font-size: 22pt}
+        .level-3 { background-color: #CCCC33; font-size: 22pt}
+        .level-4 { background-color: #FF99FF; font-size: 22pt}
+        .level-5 { background-color: #FFFF66; font-size: 22pt}
+        .level-6 { background-color: #009999; font-size: 22pt}
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        /* Стили для таблицы каны */
+        .kana-table {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .kana-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .kana-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .kana-item.selected {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .kana-char {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .kana-romaji {
+            font-size: 0.8rem;
+        }
+        
+        .file-input-container {
+            margin-top: 10px;
+        }
+        
+        .text-selector {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        
+        .full-width-panel {
+            width: 100%;
+            margin: 0;
+        }
+        .button-container {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px 0;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        #process-btn {
+            padding: 15px 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: #2c3e50;
+        }
+
+        #process-btn:hover {
+            background: #34495e;
+        }
+        
+        /* Стили для разговорника */
+        .phrases-container {
+            width: 100%;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .phrase-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            background: white;
+        }
+        
+        .phrase-item:last-child {
+            border-bottom: none;
+        }
+        
+        .phrase-line {
+            margin-bottom: 8px;
+            padding: 5px 0;
+        }
+        
+        .phrase-russian {
+            font-weight: 400;
+            color: #2c3e50;
+            font-size: 3rem;
+        }
+        
+        .phrase-japanese {
+            font-size: 3rem;
+            color: #e74c3c;
+        }
+        
+        .phrase-romaji {
+            color: #7f8c8d;
+            font-style: italic;
+            font-size: 2rem;
+        }
+        
+        .phrase-kiriji {
+            color: #3498db;
+            font-size: 2rem;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        /* Стили для таблицы каны на отдельной вкладке */
+        .kana-type-selector {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .kana-type-selector button {
+            padding: 8px 15px;
+            background: #e9ecef;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .kana-type-selector button.active {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+        
+        .kana-table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+        
+        .kana-group {
+            margin-bottom: 25px;
+        }
+        
+        .kana-group-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #3498db;
+            font-size: 1.1rem;
+        }
+        
+        .kana-group-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .kana-group-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .kana-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f8f9fa;
+            min-height: 70px;
+            justify-content: center;
+        }
+        
+        .kana-cell.katakana {
+            background: #f0f8ff;
+        }
+        
+        .kana-char-large {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .kana-romaji-large {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .kana-russian {
+            font-size: 0.85rem;
+            color: #e74c3c;
+            margin-top: 3px;
+        }
+        
+        /* Стили для списка кандзи */
+        .kanji-year-selector {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .kanji-year-selector button {
+            padding: 8px 15px;
+            background: #e9ecef;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .kanji-year-selector button.active {
+            background: #2c3e50;
+            color: white;
+            border-color: #1a252f;
+        }
+        
+        .kanji-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+        
+        .kanji-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .kanji-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .kanji-char {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        .kanji-furigana {
+            font-size: 1rem;
+            color: #e74c3c;
+            margin-bottom: 5px;
+            height: 20px;
+        }
+        
+        .kanji-kiriji {
+            font-size: 0.9rem;
+            color: #3498db;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        
+        .kanji-meaning {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            text-align: center;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .level-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .level-1-badge { background-color: #99FFCC; color: #333; }
+        .level-2-badge { background-color: #33FF33; color: #333; }
+        .level-3-badge { background-color: #CCCC33; color: #333; }
+        .level-4-badge { background-color: #FF99FF; color: #333; }
+        .level-5-badge { background-color: #FFFF66; color: #333; }
+        .level-6-badge { background-color: #009999; color: white; }
+		
+		/* Стили для поиска кандзи */
+		.search-container {
+			position: relative;
+			margin-bottom: 25px;
+		}
+
+		#kanji-search-results {
+			position: relative;
+			display: none;
+			z-index: 10;
+			background: white;
+			border: 1px solid #ddd;
+			border-radius: 8px;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+			padding: 15px;
+			margin-top: 10px;
+		}
+
+		#kanji-search-results .kanji-item {
+			animation: fadeIn 0.3s ease;
+		}
+
+		@keyframes fadeIn {
+			from { opacity: 0; transform: translateY(-10px); }
+			to { opacity: 1; transform: translateY(0); }
+		}
+
+		.no-results {
+			text-align: center;
+			padding: 30px;
+			color: #7f8c8d;
+			font-style: italic;
+			grid-column: 1 / -1;
+		}		
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Транскриптор русский → японский</h1>
+        <p class="description">Поэтапная транскрипция русского текста в японскую письменность с обучением кандзи</p>
+    </header>
+    
+    <div class="tabs">
+        <div class="tab" data-tab="reading">Чтение</div>
+        <div class="tab" data-tab="settings">Настройки</div>
+        <div class="tab" data-tab="kana-table">Таблица каны</div>
+        <div class="tab" data-tab="kanji-list">Список кандзи</div>
+        <div class="tab" data-tab="phrasebook">Разговорник</div>
+    </div>
+    
+    <div class="tab-content" id="reading-tab">
+        <div class="container">      
+            <div class="panel full-width-panel">
+                <h2>Результат транскрипции</h2>
+                <div id="output-text" class="output-area"></div>
+                <div class="stats" id="stats"></div>
+                
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color level-1"></div> 1 класс</div>
+                    <div class="legend-item"><div class="legend-color level-2"></div> 2 класс</div>
+                    <div class="legend-item"><div class="legend-color level-3"></div> 3 класс</div>
+                    <div class="legend-item"><div class="legend-color level-4"></div> 4 класс</div>
+                    <div class="legend-item"><div class="legend-color level-5"></div> 5 класс</div>
+                    <div class="legend-item"><div class="legend-color level-6"></div> 6 класс</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tab-content" id="settings-tab">
+        <div class="panel">
+            <h3>Выберите текст</h3>
+            <select id="text-selector" class="text-selector">
+                <option value="default">Выберите текст для тренировки...</option>
+                <option value="text1" selected>Текст 1: Сказка о медведихе</option>
+                <option value="text2">Текст 2: Сказка о попе и работнике его Балде</option>
+                <option value="text3">Текст 3: Дубровский (фрагмент)</option>
+                <option value="text4">Текст 4: Барышня-крестьянка (фрагмент)</option>
+            </select>
+            
+            <div class="file-input-container">
+                <label for="file-input">Или загрузите свой текстовый файл:</label>
+                <input type="file" id="file-input" accept=".txt,.text">
+            </div>
+            
+            <textarea id="input-text" placeholder="Текст появится здесь после выбора..."></textarea>
+        </div>
+    
+        <div class="settings-panel panel">
+            <div class="control-group">
+                <label for="kanji-level">Уровень кандзи:</label>
+                <select id="kanji-level">
+                    <option value="0" selected>без кандзи</option>
+                    <option value="1">1 класс (80 кандзи)</option>
+                    <option value="2">2 класс (160 кандзи)</option>
+                    <option value="3">3 класс (200 кандзи)</option>
+                    <option value="4">4 класс (200 кандзи)</option>
+                    <option value="5">5 класс (185 кандзи)</option>
+                    <option value="6">6 класс (181 кандзи)</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="kana-type">Тип каны:</label>
+                <select id="kana-type">
+                    <option value="hiragana" selected>Хирагана</option>
+                    <option value="katakana">Катакана</option>
+                    <option value="mixed">Смешанный</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2>Выбор каны для замены</h2>
+            <p>Выберите символы каны, которые будут использоваться для замены:</p>
+            <div id="kana-table" class="kana-table">
+                <!-- Таблица каны будет заполнена скриптом -->
+            </div>
+            <div class="control-group">
+                <button id="select-all-kana" class="button">Выбрать все</button>
+                <button id="deselect-all-kana" class="button">Снять все</button>
+            </div>
+        </div>
+        
+        <div class="button-container">
+            <button id="process-btn" class="button">Обработать текст</button>
+        </div>
+    </div>
+    
+    <!-- Новая вкладка с таблицей каны -->
+    <div class="tab-content" id="kana-table-tab">
+        <div class="panel full-width-panel">
+            <h2>Таблица японской каны</h2>
+            <div class="kana-type-selector">
+                <span>Тип каны:</span>
+                <button id="show-hiragana" class="active">Хирагана</button>
+                <button id="show-katakana">Катакана</button>
+            </div>
+            
+            <div id="kana-table-content" class="kana-table-container">
+                <!-- Таблица каны будет заполнена скриптом -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Новая вкладка со списком кандзи -->
+    <div class="tab-content" id="kanji-list-tab">
+        <div class="panel full-width-panel">
+            <h2>Список кандзи по годам обучения</h2>
+            <p>Кёику-кандзи (1026 иероглифов), изучаемых в японских школах</p>
+ 
+			<!-- Добавляем блок поиска -->
+			<div class="search-container" style="margin-bottom: 20px;">
+				<input type="text" id="kanji-search-input" class="search-box" 
+					   placeholder="Поиск кандзи по русскому значению...">
+				<div id="kanji-search-results" class="kanji-list" 
+					 style="display: none; margin-top: 15px; max-height: 300px;"></div>
+			</div>
+ 
+            <div class="kanji-year-selector">
+                <span>Год обучения:</span>
+                <button data-year="all" class="active">Все</button>
+                <button data-year="1">1 класс</button>
+                <button data-year="2">2 класс</button>
+                <button data-year="3">3 класс</button>
+                <button data-year="4">4 класс</button>
+                <button data-year="5">5 класс</button>
+                <button data-year="6">6 класс</button>
+            </div>
+            
+            <div id="kanji-list-content" class="kanji-list">
+                <!-- Список кандзи будет заполнен скриптом -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Новая вкладка с разговорником -->
+    <div class="tab-content" id="phrasebook-tab">
+        <div class="panel full-width-panel">
+            <h2>Японский разговорник</h2>
+            <p>Полезные фразы для путешественника</p>
+            
+            <input type="text" id="phrase-search" class="search-box" placeholder="Поиск фраз...">
+            
+            <div id="phrases-list" class="phrases-container">
+                <!-- Список фраз будет заполнен скриптом -->
+            </div>
+        </div>
+    </div>
+    
+    <div id="tooltip" class="kanji-tooltip"></div>
+    
+    <footer>
+        <p>Транскриптор русский → японский | Использует список Кёику-кандзи (1026 иероглифов)</p>
+    </footer>
+
+    <script>
+        // Словарь кандзи (будет заполнен из текстовых файлов)
+        let kanjiDictionary = [];
+        
+        // Таблица соответствия Поливанова
+        const polyvanovTable = {
+            'а': 'あ', 'и': 'い', 'у': 'う', 'э': 'え', 'о': 'お',
+            'ка': 'か', 'ки': 'き', 'ку': 'く', 'кэ': 'け', 'ко': 'こ',
+            'са': 'さ', 'си': 'し', 'су': 'す', 'сэ': 'せ', 'со': 'そ',
+            'та': 'た', 'ти': 'ち', 'цу': 'つ', 'тэ': 'て', 'то': 'と',
+            'на': 'な', 'ни': 'に', 'ну': 'ぬ', 'нэ': 'ね', 'но': 'の',
+            'ха': 'は', 'хи': 'ひ', 'фу': 'ふ', 'хэ': 'へ', 'хо': 'ほ',
+            'ма': 'ま', 'ми': 'み', 'му': 'む', 'мэ': 'め', 'мо': 'も',
+            'я': 'や', 'ю': 'ゆ', 'ё': 'よ',
+            'ра': 'ら', 'ри': 'り', 'ру': 'る', 'рэ': 'れ', 'ро': 'ろ',
+            'ва': 'わ', 'во': 'を', 'н': 'ん',
+            'га': 'が', 'ги': 'ぎ', 'гу': 'ぐ', 'гэ': 'げ', 'го': 'ご',
+            'за': 'ざ', 'зи': 'じ', 'зу': 'ず', 'зэ': 'ぜ', 'зо': 'ぞ',
+            'да': 'だ', 'ди': 'ぢ', 'ду': 'づ', 'дэ': 'で', 'до': 'ど',
+            'ба': 'ば', 'би': 'び', 'бу': 'ぶ', 'бэ': 'べ', 'бо': 'ぼ',
+            'па': 'ぱ', 'пи': 'ぴ', 'пу': 'ぷ', 'пэ': 'ぺ', 'по': 'ぽ',
+            'кя': 'きゃ', 'кю': 'きゅ', 'кё': 'きょ',
+            'ся': 'しゃ', 'сю': 'しゅ', 'сё': 'しょ',
+            'тя': 'ちゃ', 'тю': 'ちゅ', 'тё': 'ちょ',
+            'ня': 'にゃ', 'ню': 'にゅ', 'нё': 'にょ',
+            'хя': 'ひゃ', 'хю': 'ひゅ', 'хё': 'ひょ',
+            'мя': 'みゃ', 'мю': 'みゅ', 'мё': 'みょ',
+            'ря': 'りゃ', 'рю': 'りゅ', 'рё': 'りょ',
+            'гя': 'ぎゃ', 'гю': 'ぎゅ', 'гё': 'ぎょ',
+            'дзя': 'じゃ', 'дзю': 'じゅ', 'дзё': 'じょ',
+            'дзя': 'ぢゃ', 'дзю': 'ぢゅ', 'дзё': 'ぢょ',
+            'бя': 'びゃ', 'бю': 'びゅ', 'бё': 'びょ',
+            'пя': 'ぴゃ', 'пю': 'ぴゅ', 'пё': 'ぴょ'
+        };
+
+        // Таблица катаканы
+        const katakanaTable = {
+            'あ': 'ア', 'い': 'イ', 'う': 'ウ', 'え': 'エ', 'お': 'オ',
+            'か': 'カ', 'き': 'キ', 'く': 'ク', 'け': 'ケ', 'こ': 'コ',
+            'さ': 'サ', 'し': 'シ', 'す': 'ス', 'せ': 'セ', 'そ': 'ソ',
+            'た': 'タ', 'ち': 'チ', 'つ': 'ツ', 'て': 'テ', 'と': 'ト',
+            'な': 'ナ', 'に': 'ニ', 'ぬ': 'ヌ', 'ね': 'ネ', 'の': 'ノ',
+            'は': 'ハ', 'ひ': 'ヒ', 'ふ': 'フ', 'へ': 'ヘ', 'ほ': 'ホ',
+            'ま': 'マ', 'み': 'ミ', 'む': 'ム', 'め': 'メ', 'も': 'モ',
+            'や': 'ヤ', 'ゆ': 'ユ', 'よ': 'ヨ',
+            'ら': 'ラ', 'り': 'リ', 'る': 'ル', 'れ': 'レ', 'ろ': 'ロ',
+            'わ': 'ワ', 'を': 'ヲ', 'ん': 'ン',
+            'が': 'ガ', 'ぎ': 'ギ', 'ぐ': 'グ', 'げ': 'ゲ', 'ご': 'ゴ',
+            'ざ': 'ザ', 'じ': 'ジ', 'ず': 'ズ', 'ぜ': 'ゼ', 'ぞ': 'ゾ',
+            'だ': 'ダ', 'ぢ': 'ヂ', 'づ': 'ヅ', 'で': 'デ', 'ど': 'ド',
+            'ば': 'バ', 'び': 'ビ', 'ぶ': 'ブ', 'べ': 'ベ', 'ぼ': 'ボ',
+            'ぱ': 'パ', 'ぴ': 'ピ', 'ぷ': 'プ', 'ぺ': 'ペ', 'ぽ': 'ポ',
+            'きゃ': 'キャ', 'きゅ': 'キュ', 'きょ': 'キョ',
+            'しゃ': 'シャ', 'しゅ': 'シュ', 'しょ': 'ショ',
+            'ちゃ': 'チャ', 'ちゅ': 'チュ', 'ちょ': 'チョ',
+            'にゃ': 'ニャ', 'にゅ': 'ニュ', 'にょ': 'ニョ',
+            'ひゃ': 'ヒャ', 'ひゅ': 'ヒュ', 'ひょ': 'ヒョ',
+            'みゃ': 'ミャ', 'みゅ': 'ミュ', 'みょ': 'ミョ',
+            'りゃ': 'リャ', 'りゅ': 'リュ', 'りょ': 'リョ',
+            'ぎゃ': 'ギャ', 'ぎゅ': 'ギュ', 'ぎょ': 'ギョ',
+            'じゃ': 'ジャ', 'じゅ': 'ジュ', 'じょ': 'ジョ',
+            'ぢゃ': 'ヂャ', 'ぢゅ': 'ヂュ', 'ぢょ': 'ヂョ',
+            'びゃ': 'ビャ', 'びゅ': 'ビュ', 'びょ': 'ビョ',
+            'ぴゃ': 'ピャ', 'ぴゅ': 'ピュ', 'ぴょ': 'ピョ'
+        };
+        
+        // База данных фраз для разговорника
+		const phrasebookData = [
+			// === ПРИВЕТСТВИЕ И ОБЩЕНИЕ ===
+			{
+				russian: "Здравствуйте",
+				japanese: "こんにちは",
+				romaji: "Konnichiwa",
+				kiriji: "Коннитива"
+			},
+			{
+				russian: "Доброе утро",
+				japanese: "おはようございます",
+				romaji: "Ohayō gozaimasu",
+				kiriji: "Охайо: годзаймасу"
+			},
+			{
+				russian: "До свидания",
+				japanese: "さようなら",
+				romaji: "Sayōnara",
+				kiriji: "Саё:нара"
+			},
+			{
+				russian: "Пока (неформально)",
+				japanese: "じゃあね",
+				romaji: "Jā ne",
+				kiriji: "Дзя: нэ"
+			},
+			{
+				russian: "Как дела?",
+				japanese: "お元気ですか？",
+				romaji: "Ogenki desu ka?",
+				kiriji: "Огэнки дэс ка?"
+			},
+			{
+				russian: "Хорошо, спасибо",
+				japanese: "元気です、ありがとう",
+				romaji: "Genki desu, arigatō",
+				kiriji: "Гэнки дэсу, аригато:"
+			},
+
+			// === ВАЖНЫЕ ФРАЗЫ ДНЯ ===
+			{
+				russian: "Я ухожу (из дома)",
+				japanese: "いってきます",
+				romaji: "Ittekimasu",
+				kiriji: "Иттэкимасу"
+			},
+			{
+				russian: "Пока (в ответ на Ittekimasu)",
+				japanese: "いってらっしゃい",
+				romaji: "Itterasshai",
+				kiriji: "Иттерассhай"
+			},
+			{
+				russian: "Я вернулся",
+				japanese: "ただいま",
+				romaji: "Tadaima",
+				kiriji: "Тадаима"
+			},
+			{
+				russian: "С возвращением",
+				japanese: "おかえりなさい",
+				romaji: "Okaerinasai",
+				kiriji: "Окаэринисай"
+			},
+
+			// === ВЕЖЛИВОСТЬ И БЛАГОДАРНОСТЬ ===
+			{
+				russian: "Спасибо",
+				japanese: "ありがとうございます",
+				romaji: "Arigatō gozaimasu",
+				kiriji: "Аригато: годзаймасу"
+			},
+			{
+				russian: "Большое спасибо",
+				japanese: "どうもありがとうございます",
+				romaji: "Dōmo arigatō gozaimasu",
+				kiriji: "До:мо аригато: годзаймасу"
+			},
+			{
+				russian: "Спасибо за заботу (за всё, что сделали)",
+				japanese: "お世話になりました",
+				romaji: "O-sewa ni narimashita",
+				kiriji: "О-сэва ни наримасита"
+			},
+			{
+				russian: "Не побрезгуйте принять этот скромный подарок",
+				japanese: "つまらないものですが、どうぞお受け取りください",
+				romaji: "Tsumaranai mono desu ga, dōzo o-uketori kudasai",
+				kiriji: "Цумаранай моно дэсу га, до-дзо о-укэтори кудасай"
+			},
+
+			// === ПРОСЬБЫ И ПОМОЩЬ ===
+			{
+				russian: "Пожалуйста (когда просят)",
+				japanese: "ください",
+				romaji: "Kudasai",
+				kiriji: "Кудасай"
+			},
+			{
+				russian: "Пожалуйста (когда предлагаешь)",
+				japanese: "どうぞ",
+				romaji: "Dōzo",
+				kiriji: "До-дзо"
+			},
+			{
+				russian: "Пожалуйста, подождите минутку",
+				japanese: "ちょっと待ってください",
+				romaji: "Chotto matte kudasai",
+				kiriji: "Чотто маттэ кудасай"
+			},
+			{
+				russian: "Извините",
+				japanese: "すみません",
+				romaji: "Sumimasen",
+				kiriji: "Сумимасэн"
+			},
+			{
+				russian: "Простите (более лично)",
+				japanese: "ごめんなさい",
+				romaji: "Gomen nasai",
+				kiriji: "Гомэн насаи"
+			},
+			{
+				russian: "Это моя ошибка",
+				japanese: "これは私のミスです",
+				romaji: "Kore wa watashi no misu desu",
+				kiriji: "Корэ ва васи но мису дэсу"
+			},
+
+			// === НАВИГАЦИЯ И УКАЗАТЕЛИ ===
+			{
+				russian: "Где туалет?",
+				japanese: "トイレはどこですか？",
+				romaji: "Toire wa doko desu ka?",
+				kiriji: "Тоирэ ва доко дэсу ка?"
+			},
+			{
+				russian: "Где выход?",
+				japanese: "出口はどこですか？",
+				romaji: "Deguchi wa doko desu ka?",
+				kiriji: "Дэгути ва доко дэсу ка?"
+			},
+			{
+				russian: "Где вход?",
+				japanese: "入口はどこですか？",
+				romaji: "Iriguchi wa doko desu ka?",
+				kiriji: "Иригучи ва доко дэсу ка?"
+			},
+			{
+				russian: "Лево / право",
+				japanese: "左 / 右",
+				romaji: "Hidari / Migi",
+				kiriji: "Хидари / Миги"
+			},
+			{
+				russian: "Вверх / вниз",
+				japanese: "上 / 下",
+				romaji: "Ue / Shita",
+				kiriji: "Уэ / Сита"
+			},
+
+			// === ЕДА И ЗАКАЗ ===
+			{
+				russian: "Это, пожалуйста",
+				japanese: "これをください",
+				romaji: "Kore o kudasai",
+				kiriji: "Корэ о кудасай"
+			},
+			{
+				russian: "Счёт, пожалуйста",
+				japanese: "お会計をお願いします",
+				romaji: "Okaikei o onegaishimasu",
+				kiriji: "Окаикэ: о онэгаисимасу"
+			},
+			{
+				russian: "Можно попробовать?",
+				japanese: "少し試せますか？",
+				romaji: "Sukoshi tamesemasu ka?",
+				kiriji: "Сукоси тамэсэмасу ка?"
+			},
+			{
+				russian: "Вкусно!",
+				japanese: "おいしい！",
+				romaji: "Oishii!",
+				kiriji: "Ойси!"
+			},
+			{
+				russian: "Очень вкусно!",
+				japanese: "とてもおいしい！",
+				romaji: "Totemo oishii!",
+				kiriji: "Тотемо ойси!"
+			},
+			{
+				russian: "Было очень вкусно!",
+				japanese: "美味しかったです！",
+				romaji: "Oishikatta desu!",
+				kiriji: "Ойсикатта дэсу!"
+			},
+			{
+				russian: "Спасибо за еду (после приёма пищи)",
+				japanese: "ごちそうさまでした",
+				romaji: "Gochisōsama deshita",
+				kiriji: "Гочисо:сама дэсита"
+			},
+
+			// === КОММУНИКАЦИЯ И ПОНЯТИЕ ===
+			{
+				russian: "Я не понимаю",
+				japanese: "わかりません",
+				romaji: "Wakarimasen",
+				kiriji: "Вакаримасэн"
+			},
+			{
+				russian: "Я плохо понимаю по-японски",
+				japanese: "日本語がちょっとわかりません",
+				romaji: "Nihongo ga chotto wakarimasen",
+				kiriji: "Нихонго га чотто вакаримасэн"
+			},
+			{
+				russian: "Говорите медленнее, пожалуйста",
+				japanese: "ゆっくり話してください",
+				romaji: "Yukkuri hanashite kudasai",
+				kiriji: "Юккурй ханаситэ кудасай"
+			},
+			{
+				russian: "Сколько это стоит?",
+				japanese: "これはいくらですか？",
+				romaji: "Kore wa ikura desu ka?",
+				kiriji: "Корэ ва икура дэсу ка?"
+			},
+			{
+				russian: "Да",
+				japanese: "はい",
+				romaji: "Hai",
+				kiriji: "Хай"
+			},
+			{
+				russian: "Нет",
+				japanese: "いいえ",
+				romaji: "Iie",
+				kiriji: "Ииэ"
+			},
+			// === ВХОД / ВТОРЖЕНИЕ (вежливое) ===
+			{
+				russian: "Здравствуйте, я зашёл(а)",
+				japanese: "しつれいします",
+				romaji: "Shitsurei shimasu",
+				kiriji: "Ситсурэй симасу"
+			},
+			{
+				russian: "Здравствуйте, я зашёл(а) (ещё более вежливо)",
+				japanese: "しつれいいたします",
+				romaji: "Shitsurei itashimasu",
+				kiriji: "Ситсурэй итасимасу"
+			},
+			{
+				russian: "Извините за беспокойство (при выходе)",
+				japanese: "しつれいしました",
+				romaji: "Shitsurei shimashita",
+				kiriji: "Ситсурэй симасита"
+			},
+			{
+				russian: "Позвольте пройти (в магазин/офис)",
+				japanese: "おじゃまします",
+				romaji: "Ojama shimasu",
+				kiriji: "Одзяма симасу"
+			},
+			{
+				russian: "Простите за вторжение (более мягко)",
+				japanese: "おじゃまいたします",
+				romaji: "Ojama itashimasu",
+				kiriji: "Одзяма итасимасу"
+			},
+			// === ТРАНСПОРТ И БИЛЕТЫ ===
+			{
+				russian: "Одна поездка до [станции]",
+				japanese: "～まで一枚ください",
+				romaji: "Made ichimai kudasai",
+				kiriji: "~ мадэ ичимай кудасай"
+			},
+			{
+				russian: "Автомат по продаже билетов",
+				japanese: "切符の自動販売機",
+				romaji: "Kippu no jidōhanbaiki",
+				kiriji: "Киппу но дзидо:ханбаики"
+			},
+			{
+				russian: "Проход через турникет",
+				japanese: "改札を通ります",
+				romaji: "Kaisatsu o toorimasu",
+				kiriji: "Кайсатсу о то:римасу"
+			},
+			{
+				russian: "Могу я пройти здесь?",
+				japanese: "ここを通ってもいいですか？",
+				romaji: "Koko o tootte mo ii desu ka?",
+				kiriji: "Коко о то:ттэ мо ии дэсу ка?"
+			},
+			{
+				russian: "Где касса?",
+				japanese: "窓口はどこですか？",
+				romaji: "Madoguchi wa doko desu ka?",
+				kiriji: "Мадогути ва доко дэсу ка?"
+			},
+
+			// === ГОСТЕПРИИМСТВО И ДОМ ===
+			{
+				russian: "Разрешите войти",
+				japanese: "失礼します",
+				romaji: "Shitsurei shimasu",
+				kiriji: "Ситсурэй симасу"
+			},
+			{
+				russian: "Разуваться?",
+				japanese: "靴を脱ぎますか？",
+				romaji: "Kutsu o nugimasu ka?",
+				kiriji: "Куцу о нугимасу ка?"
+			},
+			{
+				russian: "Где можно оставить обувь?",
+				japanese: "靴はどこに置けばいいですか？",
+				romaji: "Kutsu wa doko ni okeba ii desu ka?",
+				kiriji: "Куцу ва доко ни окэба ии дэсу ка?"
+			},
+			{
+				russian: "Очень приятно быть у вас в гостях",
+				japanese: "お邪魔します。楽しみです。",
+				romaji: "Ojama shimasu. Tanoshimi desu.",
+				kiriji: "Одзяма симасу. Тано:сими дэсу."
+			}			
+		];
+        
+        
+        // Примеры текстов для тренировки
+        const sampleTexts = {
+            text1: `
+Как весенней теплою порою
+Из-под утренней белой зорюшки,
+Что из лесу, из лесу из дремучего
+Выходила медведиха
+Со милыми детушками медвежатами
+Погулять, посмотреть, себя показать.
+Села медведиха под белой березою;
+Стали медвежата промеж собой играть,
+По муравушке валятися,
+Боротися, кувыркатися.
+Отколь ни возьмись мужик идет,
+Он во руках несет рогатину,
+А нож-то у него за поясом,
+А мешок-то у него за плечьми.
+Как завидела медведиха
+Мужика со рогатиной,
+Заревела медведиха,
+Стала кликать малых детушек,
+Своих глупых медвежат<ушек>.
+Ах вы детушки, медвежатушки,
+Перестаньте играть, валятися,
+Боротися, кувыркатися.
+Уж как знать на нас мужик идет.
+Становитесь, хоронитесь за меня.
+Уж как я вас мужику не выдам
+И сама мужику …. выем.
+					 
+Медвежатушки испугали<ся>,
+За медведиху бросали<ся>,
+А медведиха осержалася,
+На дыбы подымалася.
+А мужик-от он догадлив был,
+Он пускался на медведиху,
+Он сажал в нее рогатину
+Что повыше пупа, пониже печени.
+Грянулась медведиха о сыру землю,
+А мужик-то ей брюхо порол,
+<Брюхо порол да> шкуру <сымал>,
+Малых медв<ежатушек> в мешок [по]клал,
+А поклавши-то домой пошел.
+					 
+«Вот тебе, жена, подарочек,
+Что медвежия шуба в пятьдесят руб<лев>,
+А что вот тебе другой подарочек,
+Трои медвежа<та> по пять рублев».
+					 
+Не звоны пошли по городу,
+Пошли вести по всему по лесу,
+Дошли вести до медведя чернобурого,
+Что убил мужик его медв<едиху>,
+Распорол ей брюхо белое,
+Брюхо распорол да шкуру сымал,
+Медвежатушек в мешок поклал.
+В ту пору медведь запечалился,
+Голову повесил, голосом завыл
+Про свою ли сударушку,
+Чернобурую медведиху.
+– Ах ты свет моя медведиха,
+На кого меня покинула,
+Вдовца печального,
+Вдовца горемычного?
+Уж как мне с тобой, моей боярыней,
+Веселой игры не игрывати,
+Милых детушек не родити,
+Медвежатушек не качати,
+Не качати, не баюкати. -
+В ту пору звери собиралися
+Ко тому ли медведю, к боярину.
+Приходили звери большие,
+Прибегали тут зверишки меньшие.
+Прибегал туто волк дворянин,
+У него-то зубы закусливые,
+У него-то глаза завистливые.
+Приходил тут бобр, богатый гость,
+У него-то бобра жирный хвост.
+Приходила ласточка дворяночка,
+Приходила белочка княгин<ечка>,
+Приходила лисица подьячиха,
+Подьячиха, казначеиха,
+Приходил скоморох горностаюшка,
+Приходил байбак тут игумен,
+Живет он байбак позадь гумен.
+Прибегал тут зайка-смерд,
+Зайка бедненькой, зайка серенькой.
+Приходил целовальник еж,
+Всё-то еж он ежится,
+Всё-то он щетинится.
+			`,
+            
+            text2: `
+Жил-был поп,
+Толоконный лоб.
+Пошел поп по базару
+Посмотреть кой-какого товару.
+Навстречу ему Балда.
+Идет, сам не зная куда.
+«Что, батька, так рано поднялся?
+Чего ты взыскался?»
+Поп ему в ответ: «Нужен мне работник:
+Повар, конюх и плотник.
+А где мне найти такого
+Служителя не слишком дорогого?»
+Балда говорит: «Буду служить тебе
+славно,
+Усердно и очень исправно,
+В год за три щелка тебе по лбу,
+Есть же мне давай вареную полбу».
+Призадумался поп,
+Стал себе почесывать лоб.
+Щелк щелку ведь розь.
+Да понадеялся он на русский авось.
+Поп говорит Балде: «Ладно.
+Не будет нам обоим накладно.
+Поживи-ка на моем подворье,
+Окажи свое усердие и проворье».
+Живет Балда в поповом доме,
+Спит себе на соломе,
+Ест за четверых,
+Работает за семерых;
+До́ светла все у него пляшет,
+Лошадь запряжет, полосу вспашет,
+Печь затопит, все заготовит, закупит,
+Яичко испечет, да сам и облупит.
+Попадья Балдой не нахвалится,
+Поповна о Балде лишь и печалится,
+Попенок зовет его тятей;
+Кашу заварит, нянчится с дитятей.
+Только поп один Балду не любит,
+Никогда его не приголубит,
+О расплате думает частенько;
+Время идет, и срок уж близенько.
+Поп ни ест, ни пьет, ночи не спит:
+Лоб у него заране трещит.
+Вот он попадье и признается:
+«Так и так: что делать остается?»
+Ум у бабы догадлив,
+На всякие хитрости повадлив.
+Попадья говорит: «Знаю средство,
+Как удалить от нас такое бедство:
+Закажи Балде службу, чтоб стало ему
+невмочь;
+А требуй, чтоб он ее исполнил точь-в-точь.
+Тем ты и лоб от расправы избавишь,
+И Балду-то без расплаты оставишь».
+Стало на сердце попа веселее,
+Начал он глядеть на Балду посмелее.
+Вот он кричит: «Поди-ка сюда,
+Верный мой работник Балда.
+Слушай: платить обязались черти
+Мне оброк по самой моей смерти;
+Лучшего б не надобно дохода,
+Да есть на них недоимки за три года.
+Как наешься ты своей полбы,
+Собери-ка с чертей оброк мне полный».
+Балда, с попом понапрасну не споря,
+Пошел, сел у берега моря;
+Там он стал веревку крутить
+Да конец ее в море мочить.
+Вот из моря вылез старый Бес:
+«Зачем ты, Балда, к нам залез?»
+– Да вот веревкой хочу море мо#рщить,
+Да вас, проклятое племя, корчить. —
+Беса старого взяла тут унылость.
+«Скажи, за что такая немилость?»
+– Как за что? Вы не плотите оброка,
+Не помните положенного срока;
+Вот ужо будет нам потеха,
+Вам, собакам, великая помеха. —
+«Ба́лдушка, погоди ты морщить море,
+Оброк сполна ты получишь вскоре.
+Погоди, вышлю к тебе внука».
+Балда мыслит: «Этого провести не
+штука!»
+Вынырнул подосланный бесенок,
+Замяукал он, как голодный котенок:
+«Здравствуй, Балда мужичок;
+Какой тебе надобен оброк?
+Об оброке век мы не слыхали,
+Не было чертям такой печали.
+Ну, так и быть, – возьми, да с уговору,
+С общего нашего приговору —
+Чтобы впредь не было никому горя:
+Кто скорее из нас обежит около моря,
+Тот и бери себе полный оброк,
+Между тем там приготовят мешок».
+Засмеялся Балда лукаво:
+«Что ты это выдумал, право?
+Где тебе тягаться со мною,
+Со мною, с самим Балдою?
+Экого послали супостата!
+Подожди-ка моего меньшого брата».
+Пошел Балда в ближний лесок,
+Поймал двух зайков, да в мешок.
+К морю опять он приходит,
+У моря бесенка находит.
+Держит Балда за уши одного зайку:
+«Попляши-тка ты под нашу балалайку:
+Ты, бесенок, еще молоденек,
+Со мною тягаться слабенек;
+Это было б лишь времени трата.
+Обгони-ка сперва моего брата.
+Раз, два, три! догоняй-ка».
+Пустились бесенок и зайка:
+Бесенок по берегу морскому,
+А зайка в лесок до дому.
+Вот, море кругом обежавши,
+Высунув язык, мордку поднявши,
+Прибежал бесенок, задыхаясь,
+Весь мокрешенек, лапкой утираясь,
+Мысля: дело с Балдою сладит.
+Глядь – а Балда братца гладит,
+Приговаривая: «Братец мой любимый,
+Устал, бедняжка! отдохни, родимый».
+Бесенок оторопел,
+Хвостик поджал, совсем присмирел.
+На братца поглядывает боком.
+«Погоди, – говорит, – схожу за
+оброком».
+Пошел к деду, говорит: «Беда!
+Обогнал меня меньшой Балда!»
+Старый Бес стал тут думать думу.
+А Балда наделал такого шуму,
+Что все море смутилось
+И волнами так и расходилось.
+Вылез бесенок: «Полно, мужичок,
+Вышлем тебе весь оброк —
+Только слушай. Видишь ты палку эту?
+Выбери себе любую мету.
+Кто далее палку бросит,
+Тот пускай и оброк уносит.
+Что ж? боишься вывихнуть ручки?
+Чего ты ждешь?» – Да жду вон этой
+тучки;
+Зашвырну туда твою палку,
+Да и начну с вами, чертями, свалку». —
+Испугался бесенок да к деду,
+Рассказывать про Балдову победу,
+А Балда над морем опять шумит
+Да чертям веревкой грозит.
+Вылез опять бесенок: «Что ты хлопочешь?
+Будет тебе оброк, коли захочешь…»
+– Нет, – говорит Балда, —
+Теперь моя череда,
+Условия сам назначу,
+Задам тебе, враженок, задачу.
+Посмотрим, какова у тебя сила.
+Видишь там сивая кобыла?
+Кобылу подыми-тка ты,
+Да неси ее полверсты;
+Снесешь кобылу, оброк уж твой;
+Не снесешь кобылу, ан будет он мой. —
+Бедненький бес
+Под кобылу подлез,
+Понатужился,
+Понапружился,
+Приподнял кобылу, два шага шагнул,
+На третьем упал, ножки протянул.
+А Балда ему: «Глупый ты бес,
+Куда ж ты за нами полез?
+И руками-то снести не смог,
+А я, смотри, снесу промеж ног».
+Сел Балда на кобылу верхом,
+Да версту проскакал, так что пыль
+столбом.
+Испугался бесенок и к деду
+Пошел рассказывать про такую победу.
+Делать нечего – черти собрали оброк
+Да на Балду взвалили мешок.
+Идет Балда, покрякивает,
+А поп, завидя Балду, вскакивает,
+За попадью прячется,
+Со страху корячится.
+Балда его тут отыскал,
+Отдал оброк, платы требовать стал.
+Бедный поп
+Подставил лоб:
+С первого щелка
+Прыгнул поп до потолка;
+Со второго щелка
+Лишился поп языка;
+А с третьего щелка
+Вышибло ум у старика.
+А Балда приговаривал с укоризной:
+«Не гонялся бы ты, поп, за дешевизной».			
+			`,
+            
+            text3: `
+Несколько лет тому назад в одном из своих поместий жил старинный русский барин Кирила Петрович Троекуров. Его богатство, знатный род и связи давали ему большой вес в губерниях, где находилось его имение. Соседи рады были угождать малейшим его прихотям; губернские чиновники трепетали при его имени; Кирила Петрович принимал знаки подобострастия как надлежащую дань; дом его всегда был полон гостями, готовыми тешить его барскую праздность, разделяя шумные, а иногда и буйные его увеселения.
+Никто не дерзал отказываться от его приглашения или в известные дни не являться с должным почтением в село Покровское. В домашнем быту Кирила Петрович выказывал все пороки человека необразованного. Избалованный всем, что только окружало его, он привык давать полную волю всем порывам пылкого своего нрава и всем затеям довольно ограниченного ума. Несмотря на необыкновенную силу физических способностей, он раза два в неделю страдал от обжорства и каждый вечер бывал навеселе. В одном из флигелей его дома жили шестнадцать горничных, занимаясь рукоделиями, свойственными их полу. Окна во флигеле были загорожены деревянною решеткою; двери запирались замками, от коих ключи хранились у Кирила Петровича. Молодые затворницы в положенные часы сходили в сад и прогуливались под надзором двух старух. От времени до времени Кирила Петрович выдавал некоторых из них замуж, и новые поступали на их место.
+С крестьянами и дворовыми обходился он строго и своенравно; но они тщеславились богатством и славою своего господина и в свою очередь позволяли себе многое в отношении к их соседям, надеясь на его сильное покровительство.
+Всегдашние занятия Троекурова состояли в разъездах около пространных его владений, в продолжительных пирах и в проказах, ежедневно притом изобретаемых и жертвою коих бывал обыкновенно какой-нибудь новый знакомец; хотя и старинные приятели не всегда их избегали за исключением одного Андрея Гавриловича Дубровского. Сей Дубровский, отставной поручик гвардии, был ему ближайшим соседом и владел семидесятью душами. Троекуров, надменный в сношениях с людьми самого высшего звания, уважал Дубровского, несмотря на его смиренное состояние. Некогда были они товарищами по службе, и Троекуров знал по опыту нетерпеливость и решительность его характера. Обстоятельства разлучили их надолго. Дубровский с расстроенным состоянием принужден был выйти в отставку и поселиться в остальной своей деревне. Кирила Петрович, узнав о том, предлагал ему свое покровительство, но Дубровский благодарил его и остался беден и независим. Спустя несколько лет Троекуров, отставной генерал-аншеф, приехал в свое поместие; они свиделись и обрадовались друг другу. С тех пор они каждый день бывали вместе, и Кирила Петрович, отроду не удостоивавший никого своим посещением, заезжал запросто в домишко своего старого товарища. Будучи ровесниками, рожденные в одном сословии, воспитанные одинаково, они сходствовали отчасти и в характерах и в наклонностях. В некоторых отношениях и судьба их была одинакова: оба женились по любви, оба скоро овдовели, у обоих оставалось по ребенку. Сын Дубровского воспитывался в Петербурге, дочь Кирила Петровича росла в глазах родителя, и Троекуров часто говаривал Дубровскому: «Слушай, брат Андрей Гаврилович: коли в твоем Володьке будет путь, так отдам за него Машу; даром что он гол как сокол». Андрей Гаврилович качал головою и отвечал обыкновенно: «Нет, Кирила Петрович: мой Володька не жених Марии Кириловне. Бедному дворянину, каков он, лучше жениться на бедной дворяночке, да быть главою в доме, чем сделаться приказчиком избалованной бабенки».
+Все завидовали согласию, царствующему между надменным Троекуровым и бедным его соседом, и удивлялись смелости сего последнего, когда он за столом у Кирила Петровича прямо высказывал свое мнение, не заботясь о том, противуречило ли оно мнениям хозяина. Некоторые пытались было ему подражать и выйти из пределов должного повиновения, но Кирила Петрович так их пугнул, что навсегда отбил у них охоту к таковым покушениям, и Дубровский один остался вне общего закона. Нечаянный случай все расстроил и переменил.
+Раз в начале осени Кирила Петрович собирался в отъезжее поле. Накануне был отдан приказ псарям и стремянным быть готовыми к пяти часам утра. Палатка и кухня отправлены были вперед на место, где Кирила Петрович должен был обедать. Хозяин и гости пошли на псарный двор, где более пятисот гончих и борзых жили в довольстве и тепле, прославляя щедрость Кирила Петровича на своем собачьем языке. Тут же находился и лазарет для больных собак, под присмотром штаб-лекаря Тимошки, и отделение, где благородные суки ощенялись и кормили своих щенят. Кирила Петрович гордился сим прекрасным заведением и никогда не упускал случая похвастаться оным перед своими гостями, из коих каждый осматривал его по крайней мере уже в двадцатый раз. Он расхаживал по псарне, окруженный своими гостями и сопровождаемый Тимошкой и главными псарями; останавливался пред некоторыми конурами, то расспрашивая о здоровии больных, то делая замечания более или менее строгие и справедливые, то подзывая к себе знакомых собак и ласково с ними разговаривая. Гости почитали обязанностию восхищаться псарнею Кирила Петровича. Один Дубровский молчал и хмурился. Он был горячий охотник. Его состояние позволяло ему держать только двух гончих и одну свору борзых; он не мог удержаться от некоторой зависти при виде сего великолепного заведения. «Что же ты хмуришься, брат, – спросил его Кирила Петрович, – или псарня моя тебе не нравится?» – «Нет, – отвечал он сурово, – псарня чудная, вряд людям вашим житье такое ж, как вашим собакам». Один из псарей обиделся. «Мы на свое житье, – сказал он, – благодаря Бога и барина не жалуемся, а что правда, то правда, иному и дворянину не худо бы променять усадьбу на любую здешнюю конурку. Ему было б и сытнее и теплее». Кирила Петрович громко засмеялся при дерзком замечании своего холопа, а гости вослед за ним захохотали, хотя и чувствовали, что шутка псаря могла отнестися и к ним. Дубровский побледнел и не сказал ни слова. В сие время поднесли в лукошке Кирилу Петровичу новорожденных щенят; он занялся ими, выбрал себе двух, прочих велел утопить. Между тем Андрей Гаврилович скрылся, и никто того не заметил.
+Возвратясь с гостями со псарного двора, Кирила Петрович сел ужинать и тогда только, не видя Дубровского, хватился о нем. Люди отвечали, что Андрей Гаврилович уехал домой. Троекуров велел тотчас его догнать и воротить непременно. Отроду не выезжал он на охоту без Дубровского, опытного и тонкого ценителя псовых достоинств и безошибочного решителя всевозможных охотничьих споров. Слуга, поскакавший за ним, воротился, как еще сидели за столом, и доложил своему господину, что, дескать, Андрей Гаврилович не послушался и не хотел воротиться. Кирила Петрович, по обыкновению своему разгоряченный наливками, осердился и вторично послал того же слугу сказать Андрею Гавриловичу, что если он тотчас же не приедет ночевать в Покровское, то он, Троекуров, с ним навеки рассорится. Слуга снова поскакал, Кирила Петрович, встав из-за стола, отпустил гостей и отправился спать.			
+            `,
+			
+            text4: `
+В одной из отдаленных наших губерний находилось имение Ивана Петровича Берестова. В молодости своей служил он в гвардии, вышел в отставку в начале 1797 года, уехал в свою деревню и с тех пор он оттуда не выезжал. Он был женат на бедной дворянке, которая умерла в родах, в то время, как он находился в отъезжем поле. Хозяйственные упражнения скоро его утешили. Он выстроил дом по собственному плану, завел у себя суконную фабрику, устроил доходы и стал почитать себя умнейшим человеком во всем околодке, в чем и не прекословили ему соседи, приезжавшие к нему гостить с своими семействами и собаками. В будни ходил он в плисовой куртке, по праздникам надевал сертук из сукна домашней работы; сам записывал расход, и ничего не читал, кроме «Сенатских Ведомостей». Вообще его любили, хотя и почитали гордым.
+Не ладил с ним один Григорий Иванович Муромский, ближайший его сосед. Этот был настоящий русский барин. Промотав в Москве большую часть имения своего, и на ту пору овдовев, уехал он в последнюю свою деревню, где продолжал проказничать, но уже в новом роде. Развел он английский сад, на который тратил почти все остальные доходы. Конюхи его были одеты английскими жокеями. Удочери его была мадам англичанка. Поля свои обработывал он по английской методе, Но на чужой манер хлеб русский не родится, и несмотря на значительное уменьшение расходов, доходы Григорья Ивановича не прибавлялись; он и в деревне находил способ входить в новые долги; со всем тем почитался человеком не глупым, ибо первый из помещиков своей губернии догадался заложить имение в Опекунской совет: оборот, казавшийся в то время чрезвычайно сложным и смелым. Из людей, осуждавших его, Берестов отзывался строже всех. Ненависть к нововведениям была отличительная черта его характера. Он не мог равнодушно говорить об англомании своего соседа, и поминутно находил случай его критиковать. Показывал ли гостю свои владения, в ответ на похвалы его хозяйственным распоряжениям: «Да-с! — говорил он с лукавой усмешкою; — у меня не то, что у соседа Григорья Ивановича. Куда нам по-английски разоряться! Были бы мы по-русски хоть сыты». Сии и подобные шутки, по усердию соседей, доводимы были до сведения Григорья Ивановича с дополнением и объяснениями. Англоман выносил критику столь же нетерпеливо, как и наши журналисты. Он бесился и прозвал своего зоила медведем и провинциалом.
+Таковы были сношения между сими двумя владельцами, как сын Берестова приехал к нему в деревню. Он был воспитан в *** университете и намеревался вступить в военную службу, но отец на то не соглашался. К статской службе молодой человек чувствовал себя совершенно неспособным. Они друг другу не уступали, и молодой Алексей стал жить покамест барином, отпустив усы на всякий случай.
+Алексей был, в самом деле, молодец. Право было бы жаль, если бы его стройного стана никогда не стягивал военный мундир, и если бы он, вместо того, чтобы рисоваться на коне, провел свою молодость согнувшись над канцелярскими бумагами. Смотря, как он на охоте скакал всегда первый, не разбирая дороги, соседи говорили согласно, что из него никогда не выдет путного столоначальника. Барышни поглядывали на него, а иные и заглядывались; но Алексей мало ими занимался, а они причиной его нечувствительности полагали любовную связь. В самом деле, ходил по рукам список с адреса одного из его писем: Акулине Петровне Курочкиной, в Москве, напротив Алексеевского монастыря, в доме медника Савельева, а вас покорнейше прошу доставить письмо сие А. Н. Р.
+			`
+        };        
+        // Выбранные символы каны для замены
+        let selectedKana = new Set();
+        
+        function preserveLineBreaks(text) {
+            return text.replace(/\n/g, '<br>');
+        }
+        
+        // Загрузка данных кандзи
+        function loadKanjiData() {
+            // Данные из предоставленных файлов (в реальном приложении загружались бы из файлов)
+            // ... (остается без изменений, как в исходном коде)
+			const kanjiData = [
+				// kyoiku_1.txt
+				{kanji: "一", meanings: ["один"], readings: {on: ["ити", "ицу"], kun: ["хито-цу"]}, level: 1},
+				{kanji: "二", meanings: ["два"], readings: {on: ["ни"], kun: ["фута-цу"]}, level: 1},
+				{kanji: "三", meanings: ["три"], readings: {on: ["сан"], kun: ["ми-цу"]}, level: 1},
+				{kanji: "四", meanings: ["четыре"], readings: {on: ["си"], kun: ["ё-цу", "ён"]}, level: 1},
+				{kanji: "五", meanings: ["пять"], readings: {on: ["го"], kun: ["ицу-цу"]}, level: 1},
+				{kanji: "六", meanings: ["шесть"], readings: {on: ["року"], kun: ["му-цу"]}, level: 1},
+				{kanji: "七", meanings: ["семь"], readings: {on: ["сити"], kun: ["нана-цу"]}, level: 1},
+				{kanji: "八", meanings: ["восемь"], readings: {on: ["хати"], kun: ["я-цу"]}, level: 1},
+				{kanji: "九", meanings: ["девять"], readings: {on: ["ку", "кю:"], kun: ["коконо-цу"]}, level: 1},
+				{kanji: "十", meanings: ["десять"], readings: {on: ["дзю:"], kun: ["то"]}, level: 1},
+				{kanji: "百", meanings: ["сто"], readings: {on: ["хяку"], kun: ["момо"]}, level: 1},
+				{kanji: "千", meanings: ["тысяча"], readings: {on: ["сэн"], kun: ["ти"]}, level: 1},
+				{kanji: "上", meanings: ["верх", "над"], readings: {on: ["сё:", "дзё:"], kun: ["а-гару", "уэ"]}, level: 1},
+				{kanji: "下", meanings: ["низ", "под"], readings: {on: ["ка", "гэ"], kun: ["сита", "куда-ру"]}, level: 1},
+				{kanji: "左", meanings: ["левый"], readings: {on: ["са"], kun: ["хидари"]}, level: 1},
+				{kanji: "右", meanings: ["правый"], readings: {on: ["у", "ю:"], kun: ["миги"]}, level: 1},
+				{kanji: "中", meanings: ["середина", "внутри"], readings: {on: ["тю:", "дзё:"], kun: ["нака"]}, level: 1},
+				{kanji: "大", meanings: ["большой"], readings: {on: ["тай", "дай"], kun: ["оо-кий"]}, level: 1},
+				{kanji: "小", meanings: ["маленький"], readings: {on: ["сё:"], kun: ["тии-сай"]}, level: 1},
+				{kanji: "月", meanings: ["месяц", "луна"], readings: {on: ["гацу", "гэцу"], kun: ["цуки"]}, level: 1},
+				{kanji: "日", meanings: ["день", "солнце"], readings: {on: ["нити", "дзицу"], kun: ["хи", "ка"]}, level: 1},
+				{kanji: "年", meanings: ["год"], readings: {on: ["нэн"], kun: ["тоси"]}, level: 1},
+				{kanji: "早", meanings: ["ранний", "рано", "быстро"], readings: {on: ["со:"], kun: ["хая-и"]}, level: 1},
+				{kanji: "木", meanings: ["дерево"], readings: {on: ["моку", "боку"], kun: ["ки", "ко"]}, level: 1},
+				{kanji: "林", meanings: ["роща"], readings: {on: ["рин"], kun: ["хаяси"]}, level: 1},
+				{kanji: "山", meanings: ["гора"], readings: {on: ["сан"], kun: ["яма"]}, level: 1},
+				{kanji: "川", meanings: ["река"], readings: {on: ["сэн"], kun: ["кава"]}, level: 1},
+				{kanji: "土", meanings: ["земля", "грунт"], readings: {on: ["то", "до"], kun: ["цути"]}, level: 1},
+				{kanji: "空", meanings: ["небо", "пустота"], readings: {on: ["ку:"], kun: ["сора", "кара"]}, level: 1},
+				{kanji: "田", meanings: ["рисовое поле"], readings: {on: ["дэн"], kun: ["та", "да"]}, level: 1},
+				{kanji: "天", meanings: ["небеса"], readings: {on: ["тэн"], kun: []}, level: 1},
+				{kanji: "生", meanings: ["жизнь"], readings: {on: ["сэй", "сё:"], kun: ["и-киру", "у-му", "нама"]}, level: 1},
+				{kanji: "花", meanings: ["цветок"], readings: {on: ["ка"], kun: ["хана"]}, level: 1},
+				{kanji: "草", meanings: ["трава"], readings: {on: ["со:"], kun: ["куса"]}, level: 1},
+				{kanji: "虫", meanings: ["насекомое"], readings: {on: ["тю:"], kun: ["муси"]}, level: 1},
+				{kanji: "犬", meanings: ["собака"], readings: {on: ["кэн"], kun: ["ину"]}, level: 1},
+				{kanji: "人", meanings: ["человек"], readings: {on: ["дзин", "нин"], kun: ["хито"]}, level: 1},
+				{kanji: "名", meanings: ["имя"], readings: {on: ["мэй", "мё:"], kun: ["на"]}, level: 1},
+				{kanji: "女", meanings: ["женщина"], readings: {on: ["дзё:", "нё"], kun: ["онна"]}, level: 1},
+				{kanji: "男", meanings: ["мужчина"], readings: {on: ["дан", "нан"], kun: ["отоко"]}, level: 1},
+				{kanji: "子", meanings: ["ребёнок"], readings: {on: ["су", "си"], kun: ["ко"]}, level: 1},
+				{kanji: "目", meanings: ["глаз"], readings: {on: ["боку", "моку"], kun: ["мэ"]}, level: 1},
+				{kanji: "耳", meanings: ["ухо"], readings: {on: ["дзи"], kun: ["мими"]}, level: 1},
+				{kanji: "口", meanings: ["рот"], readings: {on: ["ко", "ку"], kun: ["кути"]}, level: 1},
+				{kanji: "手", meanings: ["рука"], readings: {on: ["сю"], kun: ["тэ"]}, level: 1},
+				{kanji: "足", meanings: ["нога"], readings: {on: ["соку"], kun: ["аси"]}, level: 1},
+				{kanji: "見", meanings: ["видеть"], readings: {on: ["кэн"], kun: ["ми-ру"]}, level: 1},
+				{kanji: "音", meanings: ["звук"], readings: {on: ["он", "ин"], kun: ["нэ", "ото"]}, level: 1},
+				{kanji: "力", meanings: ["сила", "мощь"], readings: {on: ["рики", "рёки"], kun: ["тикара"]}, level: 1},
+				{kanji: "気", meanings: ["духовная сила", "дух", "воздух", "пар", "призрак"], readings: {on: ["ки", "ку"], kun: ["ики"]}, level: 1},
+				{kanji: "円", meanings: ["иена", "круглый"], readings: {on: ["эн"], kun: ["мару-й"]}, level: 1},
+				{kanji: "入", meanings: ["входить"], readings: {on: ["ню:"], kun: ["хаи-ру", "и-ру"]}, level: 1},
+				{kanji: "出", meanings: ["выходить"], readings: {on: ["сюцу", "суй"], kun: ["дэ-ру"]}, level: 1},
+				{kanji: "立", meanings: ["стоять", "вставать"], readings: {on: ["рицу", "рю:"], kun: ["та-цу"]}, level: 1},
+				{kanji: "休", meanings: ["отдых", "отдыхать"], readings: {on: ["кю:"], kun: ["ясу-му"]}, level: 1},
+				{kanji: "先", meanings: ["впереди", "прежний", "предыдущий"], readings: {on: ["сэн"], kun: ["саки"]}, level: 1},
+				{kanji: "夕", meanings: ["вечер"], readings: {on: ["сэки"], kun: ["ю:"]}, level: 1},
+				{kanji: "本", meanings: ["книга", "основа"], readings: {on: ["хон"], kun: ["мото"]}, level: 1},
+				{kanji: "文", meanings: ["текст"], readings: {on: ["бун", "мон"], kun: ["фуми"]}, level: 1},
+				{kanji: "字", meanings: ["буква", "знак"], readings: {on: ["дзи"], kun: ["адзана"]}, level: 1},
+				{kanji: "学", meanings: ["наука", "учить", "учиться"], readings: {on: ["гаку"], kun: ["мана-бу"]}, level: 1},
+				{kanji: "校", meanings: ["школа"], readings: {on: ["ко:"], kun: []}, level: 1},
+				{kanji: "村", meanings: ["деревня"], readings: {on: ["сон"], kun: ["мура"]}, level: 1},
+				{kanji: "町", meanings: ["город (малый)"], readings: {on: ["тё:"], kun: ["мати"]}, level: 1},
+				{kanji: "森", meanings: ["лес"], readings: {on: ["син"], kun: ["мори"]}, level: 1},
+				{kanji: "正", meanings: ["верный", "правильный"], readings: {on: ["сэё", "сё:"], kun: ["тада-сий"]}, level: 1},
+				{kanji: "水", meanings: ["вода"], readings: {on: ["суй"], kun: ["мидзу"]}, level: 1},
+				{kanji: "火", meanings: ["огонь"], readings: {on: ["ка"], kun: ["хи"]}, level: 1},
+				{kanji: "玉", meanings: ["драгоценный камень"], readings: {on: ["гёку"], kun: ["тама"]}, level: 1},
+				{kanji: "王", meanings: ["правитель"], readings: {on: ["о:"], kun: ["кими"]}, level: 1},
+				{kanji: "石", meanings: ["камень"], readings: {on: ["сэки", "сяку", "коку"], kun: ["иси"]}, level: 1},
+				{kanji: "竹", meanings: ["бамбук"], readings: {on: ["тику"], kun: ["такэ"]}, level: 1},
+				{kanji: "糸", meanings: ["нитка"], readings: {on: ["си"], kun: ["ито"]}, level: 1},
+				{kanji: "貝", meanings: ["ракушка"], readings: {on: ["бай"], kun: ["кай"]}, level: 1},
+				{kanji: "車", meanings: ["машина"], readings: {on: ["ся"], kun: ["курума"]}, level: 1},
+				{kanji: "金", meanings: ["золото"], readings: {on: ["кин", "кон"], kun: ["канэ"]}, level: 1},
+				{kanji: "雨", meanings: ["дождь"], readings: {on: ["у"], kun: ["амэ"]}, level: 1},
+				{kanji: "赤", meanings: ["красный"], readings: {on: ["сэки", "сяку"], kun: ["ака"]}, level: 1},
+				{kanji: "青", meanings: ["синий"], readings: {on: ["сэй", "сё:"], kun: ["ао"]}, level: 1},
+				{kanji: "白", meanings: ["белый"], readings: {on: ["хаку", "хяку"], kun: ["сиро"]}, level: 1},
+
+				// kyoiku_2.txt
+				{kanji: "数", meanings: ["цифра"], readings: {on: ["су:"], kun: ["кадзу"]}, level: 2},
+				{kanji: "多", meanings: ["много"], readings: {on: ["та"], kun: ["о:-й"]}, level: 2},
+				{kanji: "少", meanings: ["мало", "немного"], readings: {on: ["сё:"], kun: ["суку-най", "суко-си"]}, level: 2},
+				{kanji: "万", meanings: ["десять тысяч"], readings: {on: ["ман"], kun: ["ёродзу"]}, level: 2},
+				{kanji: "半", meanings: ["половина"], readings: {on: ["хан"], kun: ["нака-ба"]}, level: 2},
+				{kanji: "形", meanings: ["форма", "образ"], readings: {on: ["кэй", "гё:"], kun: ["катати"]}, level: 2},
+				{kanji: "太", meanings: ["толстый", "жирный"], readings: {on: ["та"], kun: ["футо-й"]}, level: 2},
+				{kanji: "細", meanings: ["тонкий"], readings: {on: ["саи"], kun: ["хосо-й"]}, level: 2},
+				{kanji: "広", meanings: ["широкий"], readings: {on: ["ко:"], kun: ["хиро-й"]}, level: 2},
+				{kanji: "長", meanings: ["длинный", "начальник"], readings: {on: ["тё:"], kun: ["нага-й"]}, level: 2},
+				{kanji: "点", meanings: ["точка"], readings: {on: ["тэн"], kun: ["боти"]}, level: 2},
+				{kanji: "丸", meanings: ["круг"], readings: {on: ["ган"], kun: ["мару"]}, level: 2},
+				{kanji: "交", meanings: ["обмениваться", "пересекаться", "встречаться"], readings: {on: ["ко:"], kun: ["мадзи-вару"]}, level: 2},
+				{kanji: "光", meanings: ["свет", "сияние"], readings: {on: ["ко:"], kun: ["хикари"]}, level: 2},
+				{kanji: "角", meanings: ["угол"], readings: {on: ["каку"], kun: ["кадо", "цуно", "суми"]}, level: 2},
+				{kanji: "計", meanings: ["измерять", "подсчитывать"], readings: {on: ["кэи"], kun: ["хака-ру"]}, level: 2},
+				{kanji: "直", meanings: ["прямой", "исправлять", "чинить"], readings: {on: ["тёку", "дзики"], kun: ["тада-ти", "нао-су"]}, level: 2},
+				{kanji: "線", meanings: ["линия"], readings: {on: ["сэн"], kun: ["судзи"]}, level: 2},
+				{kanji: "矢", meanings: ["стрела"], readings: {on: ["си"], kun: ["я"]}, level: 2},
+				{kanji: "弱", meanings: ["слабый"], readings: {on: ["дзяку"], kun: ["ёва-й"]}, level: 2},
+				{kanji: "強", meanings: ["сильный"], readings: {on: ["кё:"], kun: ["цуё-й"]}, level: 2},
+				{kanji: "高", meanings: ["высокий", "дорогой"], readings: {on: ["ко:"], kun: ["така-й"]}, level: 2},
+				{kanji: "同", meanings: ["одинаковый", "такой же"], readings: {on: ["до:"], kun: ["она-дзи"]}, level: 2},
+				{kanji: "親", meanings: ["родители"], readings: {on: ["син"], kun: ["оя"]}, level: 2},
+				{kanji: "母", meanings: ["мать", "мама"], readings: {on: ["бо"], kun: ["хаха", "каа"]}, level: 2},
+				{kanji: "父", meanings: ["отец", "папа"], readings: {on: ["фу"], kun: ["тити", "то:"]}, level: 2},
+				{kanji: "姉", meanings: ["старшая сестра"], readings: {on: ["си"], kun: ["анэ"]}, level: 2},
+				{kanji: "兄", meanings: ["старший брат"], readings: {on: ["кэи"], kun: ["ани"]}, level: 2},
+				{kanji: "弟", meanings: ["младший брат"], readings: {on: ["тэи", "даи"], kun: ["ото:то"]}, level: 2},
+				{kanji: "妹", meanings: ["младшая сестра"], readings: {on: ["маи"], kun: ["имо:то"]}, level: 2},
+				{kanji: "自", meanings: ["сам", "лично"], readings: {on: ["дзи", "си"], kun: ["мидзука-ра"]}, level: 2},
+				{kanji: "友", meanings: ["друг"], readings: {on: ["ю:"], kun: ["томо"]}, level: 2},
+				{kanji: "体", meanings: ["тело"], readings: {on: ["таи"], kun: ["карада"]}, level: 2},
+				{kanji: "毛", meanings: ["шерсть", "волос"], readings: {on: ["мо:"], kun: ["кэ"]}, level: 2},
+				{kanji: "頭", meanings: ["голова", "глава"], readings: {on: ["то:"], kun: ["атама"]}, level: 2},
+				{kanji: "顔", meanings: ["лицо"], readings: {on: ["ган"], kun: ["као"]}, level: 2},
+				{kanji: "首", meanings: ["шея"], readings: {on: ["сю"], kun: ["куби"]}, level: 2},
+				{kanji: "心", meanings: ["сердце", "душа", "чувства"], readings: {on: ["син"], kun: ["кокоро"]}, level: 2},
+				{kanji: "時", meanings: ["время"], readings: {on: ["дзи"], kun: ["токи"]}, level: 2},
+				{kanji: "曜", meanings: ["день недели"], readings: {on: ["ё:"], kun: []}, level: 2},
+				{kanji: "朝", meanings: ["утро"], readings: {on: ["тё:"], kun: ["аса"]}, level: 2},
+				{kanji: "昼", meanings: ["дневное время", "обед"], readings: {on: ["тю:"], kun: ["хиру"]}, level: 2},
+				{kanji: "夜", meanings: ["ночь"], readings: {on: ["я"], kun: ["ёру"]}, level: 2},
+				{kanji: "分", meanings: ["минута", "доля", "понимать"], readings: {on: ["фун", "бун"], kun: ["ва-кару"]}, level: 2},
+				{kanji: "週", meanings: ["неделя"], readings: {on: ["сю:"], kun: []}, level: 2},
+				{kanji: "春", meanings: ["весна"], readings: {on: ["сюн"], kun: ["хару"]}, level: 2},
+				{kanji: "夏", meanings: ["лето"], readings: {on: ["ка"], kun: ["нацу"]}, level: 2},
+				{kanji: "秋", meanings: ["осень"], readings: {on: ["сю"], kun: ["аки"]}, level: 2},
+				{kanji: "冬", meanings: ["зима"], readings: {on: ["то:"], kun: ["фую"]}, level: 2},
+				{kanji: "今", meanings: ["сейчас", "теперь"], readings: {on: ["кон"], kun: ["има"]}, level: 2},
+				{kanji: "新", meanings: ["новый"], readings: {on: ["син"], kun: ["атара-сий"]}, level: 2},
+				{kanji: "古", meanings: ["старый", "древний"], readings: {on: ["ко"], kun: ["фуру-й"]}, level: 2},
+				{kanji: "間", meanings: ["промежуток", "интервал", "между"], readings: {on: ["кан", "кэн"], kun: ["ма", "айда"]}, level: 2},
+				{kanji: "方", meanings: ["сторона", "направление"], readings: {on: ["хо:"], kun: ["ката"]}, level: 2},
+				{kanji: "北", meanings: ["север"], readings: {on: ["хоку"], kun: ["кита"]}, level: 2},
+				{kanji: "南", meanings: ["юг"], readings: {on: ["нан"], kun: ["минами"]}, level: 2},
+				{kanji: "東", meanings: ["восток"], readings: {on: ["то:"], kun: ["хигаси", "адзума"]}, level: 2},
+				{kanji: "西", meanings: ["запад"], readings: {on: ["сэй", "сай"], kun: ["ниси"]}, level: 2},
+				{kanji: "遠", meanings: ["далекий"], readings: {on: ["эн"], kun: ["то:-й"]}, level: 2},
+				{kanji: "近", meanings: ["близкий"], readings: {on: ["кин"], kun: ["тикай"]}, level: 2},
+				{kanji: "前", meanings: ["перед"], readings: {on: ["дзэн"], kun: ["маэ"]}, level: 2},
+				{kanji: "後", meanings: ["потом", "после", "позади", "сзади"], readings: {on: ["го", "ко:"], kun: ["ноти", "усиро", "ато"]}, level: 2},
+				{kanji: "内", meanings: ["внутри"], readings: {on: ["най"], kun: ["ути"]}, level: 2},
+				{kanji: "外", meanings: ["вне", "снаружи", "иной"], readings: {on: ["гай", "гэ"], kun: ["сото", "хока", "хадзусу"]}, level: 2},
+				{kanji: "場", meanings: ["место"], readings: {on: ["дзё:"], kun: ["ба"]}, level: 2},
+				{kanji: "地", meanings: ["земля", "почва"], readings: {on: ["ти", "дзи"], kun: []}, level: 2},
+				{kanji: "国", meanings: ["страна"], readings: {on: ["коку"], kun: ["куни"]}, level: 2},
+				{kanji: "園", meanings: ["сад"], readings: {on: ["эн"], kun: ["соно"]}, level: 2},
+				{kanji: "谷", meanings: ["долина"], readings: {on: ["коку"], kun: ["тани"]}, level: 2},
+				{kanji: "野", meanings: ["поле"], readings: {on: ["я"], kun: ["но"]}, level: 2},
+				{kanji: "原", meanings: ["луг"], readings: {on: ["гэн"], kun: ["хара"]}, level: 2},
+				{kanji: "里", meanings: ["родная деревня", "родина", "мера длины"], readings: {on: ["ри"], kun: ["сато"]}, level: 2},
+				{kanji: "市", meanings: ["город (крупный)"], readings: {on: ["си"], kun: ["ити"]}, level: 2},
+				{kanji: "京", meanings: ["столица"], readings: {on: ["кё:", "кэй"], kun: ["мияко"]}, level: 2},
+				{kanji: "風", meanings: ["ветер"], readings: {on: ["фу:"], kun: ["кадзэ"]}, level: 2},
+				{kanji: "雪", meanings: ["снег"], readings: {on: ["сэцу"], kun: ["юки"]}, level: 2},
+				{kanji: "雲", meanings: ["облако", "туча"], readings: {on: ["ун"], kun: ["кумо"]}, level: 2},
+				{kanji: "池", meanings: ["пруд", "водоём"], readings: {on: ["ти"], kun: ["икэ"]}, level: 2},
+				{kanji: "海", meanings: ["море"], readings: {on: ["кай"], kun: ["уми"]}, level: 2},
+				{kanji: "岩", meanings: ["скала"], readings: {on: ["ган"], kun: ["ива"]}, level: 2},
+				{kanji: "星", meanings: ["звезда"], readings: {on: ["сэй"], kun: ["хоси"]}, level: 2},
+				{kanji: "室", meanings: ["комната", "теплица"], readings: {on: ["сицу"], kun: ["муро"]}, level: 2},
+				{kanji: "戸", meanings: ["дверь", "ставня"], readings: {on: ["ко"], kun: ["то", "бэ"]}, level: 2},
+				{kanji: "家", meanings: ["дом (свой)", "здание"], readings: {on: ["ка", "кэ"], kun: ["иэ"]}, level: 2},
+				{kanji: "寺", meanings: ["буддийский храм"], readings: {on: ["дзи"], kun: ["тэра"]}, level: 2},
+				{kanji: "通", meanings: ["проходить", "проезжать"], readings: {on: ["цу"], kun: ["то:-ру"]}, level: 2},
+				{kanji: "門", meanings: ["ворота"], readings: {on: ["мон"], kun: ["кадо"]}, level: 2},
+				{kanji: "道", meanings: ["дорога"], readings: {on: ["до:"], kun: ["мити"]}, level: 2},
+				{kanji: "話", meanings: ["говорить", "разговор", "беседа"], readings: {on: ["ва"], kun: ["ханаси", "хана-су"]}, level: 2},
+				{kanji: "言", meanings: ["слово", "говорить"], readings: {on: ["гэн", "гон"], kun: ["и-у", "кото"]}, level: 2},
+				{kanji: "答", meanings: ["ответ", "отвечать"], readings: {on: ["то:"], kun: ["кота-эру"]}, level: 2},
+				{kanji: "声", meanings: ["голос"], readings: {on: ["сэй"], kun: ["коэ"]}, level: 2},
+				{kanji: "聞", meanings: ["слышать"], readings: {on: ["бун", "мон"], kun: ["ки-ку"]}, level: 2},
+				{kanji: "語", meanings: ["язык", "речь", "говорить", "рассказывать"], readings: {on: ["го"], kun: ["ката-ру"]}, level: 2},
+				{kanji: "読", meanings: ["читать"], readings: {on: ["доку"], kun: ["ё-му"]}, level: 2},
+				{kanji: "書", meanings: ["писать"], readings: {on: ["сё"], kun: ["каку"]}, level: 2},
+				{kanji: "記", meanings: ["записывать"], readings: {on: ["ки"], kun: ["сиру-су"]}, level: 2},
+				{kanji: "紙", meanings: ["бумага"], readings: {on: ["си"], kun: ["ками"]}, level: 2},
+				{kanji: "画", meanings: ["картина", "план"], readings: {on: ["га", "каку"], kun: []}, level: 2},
+				{kanji: "絵", meanings: ["картина", "рисунок"], readings: {on: ["кай"], kun: ["э"]}, level: 2},
+				{kanji: "図", meanings: ["план", "карта"], readings: {on: ["дзу"], kun: ["хака-ру"]}, level: 2},
+				{kanji: "工", meanings: ["рабочий", "строитель", "техника"], readings: {on: ["ко:", "ку"], kun: []}, level: 2},
+				{kanji: "教", meanings: ["учить", "преподавать", "объяснять"], readings: {on: ["кё:"], kun: ["оси-эру"]}, level: 2},
+				{kanji: "晴", meanings: ["ясная погода"], readings: {on: ["сэй"], kun: ["харэ"]}, level: 2},
+				{kanji: "思", meanings: ["думать"], readings: {on: ["си"], kun: ["омо-у"]}, level: 2},
+				{kanji: "考", meanings: ["размышлять", "полагать"], readings: {on: ["ко:"], kun: ["канга-эру"]}, level: 2},
+				{kanji: "知", meanings: ["знание", "знать"], readings: {on: ["ти"], kun: ["си-ру"]}, level: 2},
+				{kanji: "才", meanings: ["талант", "дарование"], readings: {on: ["сай", "дзай"], kun: ["вадзукани", "дзаэ"]}, level: 2},
+				{kanji: "理", meanings: ["аргумент", "довод", "принцип"], readings: {on: ["ри"], kun: ["котовари"]}, level: 2},
+				{kanji: "算", meanings: ["вычислять"], readings: {on: ["сан"], kun: []}, level: 2},
+				{kanji: "作", meanings: ["создавать", "делать"], readings: {on: ["саку"], kun: ["цуку-ру"]}, level: 2},
+				{kanji: "元", meanings: ["начало", "основание"], readings: {on: ["гэн", "ган"], kun: ["мото"]}, level: 2},
+				{kanji: "食", meanings: ["еда", "есть"], readings: {on: ["сёку"], kun: ["табэ-ру", "ку-у"]}, level: 2},
+				{kanji: "肉", meanings: ["мясо"], readings: {on: ["нику"], kun: []}, level: 2},
+				{kanji: "馬", meanings: ["лошадь"], readings: {on: ["ба"], kun: ["ума", "ма"]}, level: 2},
+				{kanji: "牛", meanings: ["корова"], readings: {on: ["гю:"], kun: ["уси"]}, level: 2},
+				{kanji: "魚", meanings: ["рыба"], readings: {on: ["гё"], kun: ["уо", "сакана"]}, level: 2},
+				{kanji: "鳥", meanings: ["птица"], readings: {on: ["тё:"], kun: ["тори"]}, level: 2},
+				{kanji: "羽", meanings: ["перо"], readings: {on: ["у"], kun: ["ха", "ханэ"]}, level: 2},
+				{kanji: "鳴", meanings: ["чирикать"], readings: {on: ["мэй"], kun: ["на-ку"]}, level: 2},
+				{kanji: "麦", meanings: ["хлебные злаки"], readings: {on: ["баку"], kun: ["муги"]}, level: 2},
+				{kanji: "米", meanings: ["рис"], readings: {on: ["бэй", "май"], kun: ["комэ"]}, level: 2},
+				{kanji: "茶", meanings: ["чай"], readings: {on: ["тя", "са"], kun: []}, level: 2},
+				{kanji: "色", meanings: ["цвет"], readings: {on: ["сёку"], kun: ["иро"]}, level: 2},
+				{kanji: "黄", meanings: ["жёлтый"], readings: {on: ["о:"], kun: ["ки"]}, level: 2},
+				{kanji: "黒", meanings: ["чёрный"], readings: {on: ["коку"], kun: ["куро"]}, level: 2},
+				{kanji: "来", meanings: ["приходить", "прибывать"], readings: {on: ["раи"], kun: ["ку-ру"]}, level: 2},
+				{kanji: "行", meanings: ["идти", "ходить", "совершать"], readings: {on: ["ко:", "гё:"], kun: ["и-ку", "ю-ку", "оконау"]}, level: 2},
+				{kanji: "帰", meanings: ["возвращаться"], readings: {on: ["ки"], kun: ["каэ-ру"]}, level: 2},
+				{kanji: "歩", meanings: ["шагать", "ходить", "идти"], readings: {on: ["хо"], kun: ["ару-ку", "аю-му"]}, level: 2},
+				{kanji: "走", meanings: ["бежать"], readings: {on: ["со:"], kun: ["хаси-ру"]}, level: 2},
+				{kanji: "止", meanings: ["остановиться"], readings: {on: ["си"], kun: ["то-мару"]}, level: 2},
+				{kanji: "活", meanings: ["живой", "активный"], readings: {on: ["кацу"], kun: ["и-киру"]}, level: 2},
+				{kanji: "店", meanings: ["магазин"], readings: {on: ["тэн"], kun: ["мисэ", "я"]}, level: 2},
+				{kanji: "買", meanings: ["покупать"], readings: {on: ["бай"], kun: ["ка-у"]}, level: 2},
+				{kanji: "売", meanings: ["продавать"], readings: {on: ["бай"], kun: ["у-ру"]}, level: 2},
+				{kanji: "午", meanings: ["полдень", "лошадь (7 знак китайского гороскопа)"], readings: {on: ["го"], kun: ["ума"]}, level: 2},
+				{kanji: "汽", meanings: ["пар"], readings: {on: ["ки"], kun: []}, level: 2},
+				{kanji: "弓", meanings: ["лук (оружие)"], readings: {on: ["кю:"], kun: ["юми"]}, level: 2},
+				{kanji: "回", meanings: ["раз (при счёте)", "вращать"], readings: {on: ["кай"], kun: ["мава-ру"]}, level: 2},
+				{kanji: "会", meanings: ["встреча", "встречаться", "видеться"], readings: {on: ["кай", "э"], kun: ["а-у"]}, level: 2},
+				{kanji: "組", meanings: ["группа", "класс"], readings: {on: ["со"], kun: ["куми"]}, level: 2},
+				{kanji: "船", meanings: ["судно", "лодка"], readings: {on: ["сэн"], kun: ["фунэ"]}, level: 2},
+				{kanji: "明", meanings: ["ясный", "светлый"], readings: {on: ["мэи"], kun: ["ака-руй"]}, level: 2},
+				{kanji: "社", meanings: ["фирма", "святилище"], readings: {on: ["ся"], kun: ["ясиро"]}, level: 2},
+				{kanji: "切", meanings: ["резать", "рубить"], readings: {on: ["сэцу"], kun: ["ки-ру"]}, level: 2},
+				{kanji: "電", meanings: ["электричество"], readings: {on: ["дэн"], kun: []}, level: 2},
+				{kanji: "毎", meanings: ["каждый"], readings: {on: ["май"], kun: []}, level: 2},
+				{kanji: "合", meanings: ["соединять", "подходить"], readings: {on: ["го:"], kun: ["а-у"]}, level: 2},
+				{kanji: "当", meanings: ["данный", "попадать", "удаваться"], readings: {on: ["то:"], kun: ["а-тару"]}, level: 2},
+				{kanji: "台", meanings: ["подставка"], readings: {on: ["дай", "тай"], kun: []}, level: 2},
+				{kanji: "楽", meanings: ["наслаждение", "веселье"], readings: {on: ["раку"], kun: ["тано-сий"]}, level: 2},
+				{kanji: "公", meanings: ["общественный", "публичный"], readings: {on: ["ко:"], kun: ["о:якэ"]}, level: 2},
+				{kanji: "引", meanings: ["тянуть"], readings: {on: ["ин"], kun: ["хику"]}, level: 2},
+				{kanji: "科", meanings: ["отделение"], readings: {on: ["ка"], kun: []}, level: 2},
+				{kanji: "歌", meanings: ["песня"], readings: {on: ["ка"], kun: ["ута"]}, level: 2},
+				{kanji: "刀", meanings: ["меч"], readings: {on: ["то:"], kun: ["катана"]}, level: 2},
+				{kanji: "番", meanings: ["очередь", "черёд"], readings: {on: ["бан"], kun: []}, level: 2},
+				{kanji: "用", meanings: ["использовать"], readings: {on: ["ё:"], kun: ["моти-иру"]}, level: 2},
+				{kanji: "何", meanings: ["что"], readings: {on: ["ка"], kun: ["нани", "нан"]}, level: 2},
+
+				// kyoiku_3.txt
+				{kanji: "丁", meanings: ["счётное слово"], readings: {on: ["тё:"], kun: ["хиното"]}, level: 3},
+				{kanji: "世", meanings: ["мир", "поколение"], readings: {on: ["сэй", "сэ"], kun: ["ё"]}, level: 3},
+				{kanji: "両", meanings: ["оба"], readings: {on: ["рё:"], kun: ["тэру", "футацу"]}, level: 3},
+				{kanji: "主", meanings: ["хозяин", "владелец", "главный"], readings: {on: ["сю"], kun: ["нуси", "омо"]}, level: 3},
+				{kanji: "乗", meanings: ["ехать"], readings: {on: ["дзё:"], kun: ["но-ру"]}, level: 3},
+				{kanji: "予", meanings: ["заранее"], readings: {on: ["ё"], kun: ["аракадзимэ"]}, level: 3},
+				{kanji: "事", meanings: ["обстоятельство", "факт", "дело", "случай", "происшествие"], readings: {on: ["дзи"], kun: ["кото"]}, level: 3},
+				{kanji: "仕", meanings: ["служить", "делать"], readings: {on: ["си"], kun: ["цука-эру"]}, level: 3},
+				{kanji: "他", meanings: ["другой"], readings: {on: ["та"], kun: ["хока"]}, level: 3},
+				{kanji: "代", meanings: ["замещать", "заменять", "эра"], readings: {on: ["дай", "тай"], kun: ["кавару", "ё"]}, level: 3},
+				{kanji: "住", meanings: ["жить"], readings: {on: ["дзю:"], kun: ["суму"]}, level: 3},
+				{kanji: "使", meanings: ["применять", "употреблять", "пользоваться"], readings: {on: ["си"], kun: ["цука-у"]}, level: 3},
+				{kanji: "係", meanings: ["ответственный", "ответственность"], readings: {on: ["кэй"], kun: ["какари", "кака-ру"]}, level: 3},
+				{kanji: "倍", meanings: ["удваивать"], readings: {on: ["бай"], kun: []}, level: 3},
+				{kanji: "全", meanings: ["полностью весь", "всё", "абсолютно"], readings: {on: ["дзэн"], kun: ["матта-ку", "субэ-тэ"]}, level: 3},
+				{kanji: "具", meanings: ["орудие", "принадлежности", "оборудование"], readings: {on: ["гу"], kun: ["сона-эру", "цубуса-ни"]}, level: 3},
+				{kanji: "写", meanings: ["копировать"], readings: {on: ["ся"], kun: ["уцу-су"]}, level: 3},
+				{kanji: "列", meanings: ["ряд", "шеренга", "строка"], readings: {on: ["рэцу"], kun: []}, level: 3},
+				{kanji: "助", meanings: ["помощь", "спасать", "выручать"], readings: {on: ["дзё"], kun: ["тасу-кэру"]}, level: 3},
+				{kanji: "勉", meanings: ["стараться", "прилагать усилия", "прилежный"], readings: {on: ["бэн"], kun: ["цуто-мэру"]}, level: 3},
+				{kanji: "動", meanings: ["двигаться"], readings: {on: ["до:"], kun: ["уго-ку"]}, level: 3},
+				{kanji: "勝", meanings: ["побеждать", "выигрывать"], readings: {on: ["сё:"], kun: ["ка-цу"]}, level: 3},
+				{kanji: "化", meanings: ["изменяться", "превращаться"], readings: {on: ["ка"], kun: ["ба-кэру"]}, level: 3},
+				{kanji: "区", meanings: ["район города"], readings: {on: ["ку"], kun: []}, level: 3},
+				{kanji: "医", meanings: ["доктор", "медицина"], readings: {on: ["и"], kun: ["и-суру"]}, level: 3},
+				{kanji: "去", meanings: ["покидать", "уходить"], readings: {on: ["кё", "ко"], kun: ["са-ру"]}, level: 3},
+				{kanji: "反", meanings: ["против", "изгибаться"], readings: {on: ["хан"], kun: ["сору"]}, level: 3},
+				{kanji: "取", meanings: ["брать", "получать"], readings: {on: ["сю"], kun: ["то-ру"]}, level: 3},
+				{kanji: "受", meanings: ["принимать", "получать"], readings: {on: ["дзю"], kun: ["у-кэру"]}, level: 3},
+				{kanji: "号", meanings: ["номер"], readings: {on: ["го:"], kun: ["ёбина", "сакэбу"]}, level: 3},
+				{kanji: "向", meanings: ["по направлению к", "поворачиваться", "обращать"], readings: {on: ["ко:"], kun: ["му-кау"]}, level: 3},
+				{kanji: "君", meanings: ["ты", "господин"], readings: {on: ["кун"], kun: ["кими"]}, level: 3},
+				{kanji: "味", meanings: ["вкус"], readings: {on: ["ми"], kun: ["адзи"]}, level: 3},
+				{kanji: "命", meanings: ["жизнь", "приказ"], readings: {on: ["мэй"], kun: ["иноти"]}, level: 3},
+				{kanji: "和", meanings: ["гармония", "утихать", "смягчаться"], readings: {on: ["ва"], kun: ["ява-рагэру"]}, level: 3},
+				{kanji: "品", meanings: ["товар", "предмет"], readings: {on: ["хин"], kun: ["сина"]}, level: 3},
+				{kanji: "員", meanings: ["сотрудник", "персонал"], readings: {on: ["ин"], kun: []}, level: 3},
+				{kanji: "商", meanings: ["коммерция", "торговля", "торговать"], readings: {on: ["сё:"], kun: ["акина-у"]}, level: 3},
+				{kanji: "問", meanings: ["вопрос", "спрашивать"], readings: {on: ["мон"], kun: ["то-у", "тон"]}, level: 3},
+				{kanji: "坂", meanings: ["склон", "подъём"], readings: {on: ["хан"], kun: ["сака"]}, level: 3},
+				{kanji: "央", meanings: ["центр"], readings: {on: ["о:"], kun: []}, level: 3},
+				{kanji: "始", meanings: ["начало", "начинать"], readings: {on: ["си"], kun: ["хадзи-мэру"]}, level: 3},
+				{kanji: "委", meanings: ["поручать", "доверять"], readings: {on: ["и"], kun: ["юда-нэру"]}, level: 3},
+				{kanji: "守", meanings: ["охранять", "защищать"], readings: {on: ["сю"], kun: ["мамо-ру"]}, level: 3},
+				{kanji: "安", meanings: ["дешёвый", "мирный"], readings: {on: ["ан"], kun: ["ясу-й"]}, level: 3},
+				{kanji: "定", meanings: ["определять", "решать"], readings: {on: ["тэй", "дзё:"], kun: ["сада-мэру"]}, level: 3},
+				{kanji: "実", meanings: ["настоящий", "плод", "созревать"], readings: {on: ["дзицу"], kun: ["ми", "мино-ру"]}, level: 3},
+				{kanji: "客", meanings: ["гость", "посетитель"], readings: {on: ["кяку"], kun: []}, level: 3},
+				{kanji: "宮", meanings: ["храм (синтоистский)", "дворец"], readings: {on: ["кю:"], kun: ["мия"]}, level: 3},
+				{kanji: "宿", meanings: ["гостиница", "переночевать"], readings: {on: ["сюку"], kun: ["ядо"]}, level: 3},
+				{kanji: "寒", meanings: ["холод", "холодный"], readings: {on: ["кан"], kun: ["саму-й"]}, level: 3},
+				{kanji: "対", meanings: ["против", "противоположность"], readings: {on: ["тай"], kun: ["аитэ", "сорой"]}, level: 3},
+				{kanji: "局", meanings: ["управление", "бюро", "организация", "контора"], readings: {on: ["кёку"], kun: ["цубонэ"]}, level: 3},
+				{kanji: "屋", meanings: ["здание", "крыша"], readings: {on: ["оку"], kun: ["я"]}, level: 3},
+				{kanji: "岸", meanings: ["берег"], readings: {on: ["ган"], kun: ["киси"]}, level: 3},
+				{kanji: "島", meanings: ["остров"], readings: {on: ["то:"], kun: ["сима"]}, level: 3},
+				{kanji: "州", meanings: ["провинция", "область", "штат"], readings: {on: ["сю:"], kun: ["су"]}, level: 3},
+				{kanji: "帳", meanings: ["книга для записей"], readings: {on: ["тё:"], kun: ["тобари"]}, level: 3},
+				{kanji: "平", meanings: ["плоский"], readings: {on: ["хэй", "бё"], kun: ["тай-ра", "хира"]}, level: 3},
+				{kanji: "幸", meanings: ["счастье", "удача"], readings: {on: ["ко:"], kun: ["сайва-й", "сиава-сэ", "сати"]}, level: 3},
+				{kanji: "度", meanings: ["степень", "градус", "раз"], readings: {on: ["до"], kun: ["таби"]}, level: 3},
+				{kanji: "庫", meanings: ["склад", "хранилище", "кладовая"], readings: {on: ["ко", "ку"], kun: ["кура"]}, level: 3},
+				{kanji: "庭", meanings: ["двор", "сад"], readings: {on: ["тэй"], kun: ["нива"]}, level: 3},
+				{kanji: "式", meanings: ["формула", "тип", "модель", "церемония"], readings: {on: ["сики"], kun: []}, level: 3},
+				{kanji: "役", meanings: ["роль", "должность", "война"], readings: {on: ["яку"], kun: []}, level: 3},
+				{kanji: "待", meanings: ["ждать"], readings: {on: ["тай"], kun: ["ма-цу"]}, level: 3},
+				{kanji: "急", meanings: ["спешить"], readings: {on: ["кю:"], kun: ["исо-гу"]}, level: 3},
+				{kanji: "息", meanings: ["дыхание"], readings: {on: ["соку"], kun: ["ики"]}, level: 3},
+				{kanji: "悪", meanings: ["плохой", "зло"], readings: {on: ["аку"], kun: ["вару-й"]}, level: 3},
+				{kanji: "悲", meanings: ["печальный", "грустный"], readings: {on: ["хи"], kun: ["канаси-й"]}, level: 3},
+				{kanji: "想", meanings: ["представлять себе", "думать"], readings: {on: ["со:"], kun: ["омо-у"]}, level: 3},
+				{kanji: "意", meanings: ["мысль", "чувства", "душа"], readings: {on: ["и"], kun: []}, level: 3},
+				{kanji: "感", meanings: ["чувство", "ощущение"], readings: {on: ["кан"], kun: []}, level: 3},
+				{kanji: "所", meanings: ["место"], readings: {on: ["сё"], kun: ["токоро"]}, level: 3},
+				{kanji: "打", meanings: ["ударять", "бить"], readings: {on: ["да"], kun: ["у-цу"]}, level: 3},
+				{kanji: "投", meanings: ["бросать", "кидать"], readings: {on: ["то:"], kun: ["на-гэру"]}, level: 3},
+				{kanji: "拾", meanings: ["подбирать", "находить"], readings: {on: ["сю:"], kun: ["хиро-у"]}, level: 3},
+				{kanji: "持", meanings: ["держать", "владеть"], readings: {on: ["дзи"], kun: ["мо-цу"]}, level: 3},
+				{kanji: "指", meanings: ["палец", "указывать"], readings: {on: ["си"], kun: ["юби", "са-су"]}, level: 3},
+				{kanji: "放", meanings: ["отпускать", "бросать"], readings: {on: ["хо:"], kun: ["хана-су"]}, level: 3},
+				{kanji: "整", meanings: ["приводить в порядок"], readings: {on: ["сэй"], kun: ["тотоно-эру"]}, level: 3},
+				{kanji: "旅", meanings: ["путешествие"], readings: {on: ["рё"], kun: ["таби"]}, level: 3},
+				{kanji: "族", meanings: ["семья", "племя"], readings: {on: ["дзоку"], kun: ["якара"]}, level: 3},
+				{kanji: "昔", meanings: ["прошлое", "старые времена"], readings: {on: ["сэки"], kun: ["мукаси"]}, level: 3},
+				{kanji: "昭", meanings: ["эпоха Сёва", "яркий", "светлый"], readings: {on: ["сё:"], kun: []}, level: 3},
+				{kanji: "暑", meanings: ["жаркий"], readings: {on: ["сё"], kun: ["ацу-й"]}, level: 3},
+				{kanji: "暗", meanings: ["тёмный"], readings: {on: ["ан"], kun: ["кура-й"]}, level: 3},
+				{kanji: "曲", meanings: ["мелодия", "сгибать", "искривлять"], readings: {on: ["кёку"], kun: ["ма-гэру"]}, level: 3},
+				{kanji: "有", meanings: ["иметь", "быть"], readings: {on: ["ю:"], kun: ["а-ру"]}, level: 3},
+				{kanji: "服", meanings: ["одежда"], readings: {on: ["фуку"], kun: []}, level: 3},
+				{kanji: "期", meanings: ["срок", "период времени"], readings: {on: ["ки"], kun: []}, level: 3},
+				{kanji: "板", meanings: ["доска", "плита"], readings: {on: ["хан", "бан"], kun: ["ита"]}, level: 3},
+				{kanji: "柱", meanings: ["столб"], readings: {on: ["тю:"], kun: ["хасира"]}, level: 3},
+				{kanji: "根", meanings: ["корень"], readings: {on: ["кон"], kun: ["нэ"]}, level: 3},
+				{kanji: "植", meanings: ["сажать (растение)"], readings: {on: ["сёку"], kun: ["у-эру"]}, level: 3},
+				{kanji: "業", meanings: ["промышленность", "занятие", "дело"], readings: {on: ["гё:"], kun: []}, level: 3},
+				{kanji: "様", meanings: ["вот так", "вид", "положение"], readings: {on: ["ё:"], kun: ["сама"]}, level: 3},
+				{kanji: "横", meanings: ["горизонтальный", "ширина", "бок"], readings: {on: ["о:"], kun: ["ёко"]}, level: 3},
+				{kanji: "橋", meanings: ["мост"], readings: {on: ["кё:"], kun: ["хаси"]}, level: 3},
+				{kanji: "次", meanings: ["следующий"], readings: {on: ["дзи"], kun: ["цуги", "цу-гу"]}, level: 3},
+				{kanji: "歯", meanings: ["зуб"], readings: {on: ["си"], kun: ["ха"]}, level: 3},
+				{kanji: "死", meanings: ["смерть", "умирать"], readings: {on: ["си"], kun: ["си-ну"]}, level: 3},
+				{kanji: "氷", meanings: ["лёд"], readings: {on: ["хё:"], kun: ["ко:ри"]}, level: 3},
+				{kanji: "決", meanings: ["решать"], readings: {on: ["кэцу"], kun: ["ки-мэру"]}, level: 3},
+				{kanji: "油", meanings: ["масло"], readings: {on: ["ю"], kun: ["абура"]}, level: 3},
+				{kanji: "波", meanings: ["волна"], readings: {on: ["ха"], kun: ["нами"]}, level: 3},
+				{kanji: "注", meanings: ["лить", "наливать", "примечание"], readings: {on: ["тю:"], kun: ["сосо-гу"]}, level: 3},
+				{kanji: "泳", meanings: ["плавать"], readings: {on: ["эй"], kun: ["оё-гу"]}, level: 3},
+				{kanji: "洋", meanings: ["океан"], readings: {on: ["ё:"], kun: []}, level: 3},
+				{kanji: "流", meanings: ["течение", "течь"], readings: {on: ["рю:"], kun: ["нага-рэру"]}, level: 3},
+				{kanji: "消", meanings: ["гасить", "гаснуть"], readings: {on: ["сё:"], kun: ["ки-еру", "кэ-су"]}, level: 3},
+				{kanji: "深", meanings: ["глубокий"], readings: {on: ["син"], kun: ["фука-й"]}, level: 3},
+				{kanji: "温", meanings: ["тёплый"], readings: {on: ["он"], kun: ["атата-кай"]}, level: 3},
+				{kanji: "港", meanings: ["гавань", "порт"], readings: {on: ["ко:"], kun: ["минато"]}, level: 3},
+				{kanji: "湖", meanings: ["озеро"], readings: {on: ["ко"], kun: ["мидзу:ми"]}, level: 3},
+				{kanji: "湯", meanings: ["горячая вода"], readings: {on: ["то:"], kun: ["ю"]}, level: 3},
+				{kanji: "漢", meanings: ["китайский"], readings: {on: ["кан"], kun: []}, level: 3},
+				{kanji: "炭", meanings: ["уголь"], readings: {on: ["тан"], kun: ["суми"]}, level: 3},
+				{kanji: "物", meanings: ["вещь"], readings: {on: ["буцу", "моцу"], kun: ["моно"]}, level: 3},
+				{kanji: "球", meanings: ["мяч", "шар"], readings: {on: ["кю:"], kun: ["тама"]}, level: 3},
+				{kanji: "由", meanings: ["причина"], readings: {on: ["ю:", "ю"], kun: ["ёси"]}, level: 3},
+				{kanji: "申", meanings: ["докладывать", "говорить"], readings: {on: ["син"], kun: ["мо:-су"]}, level: 3},
+				{kanji: "界", meanings: ["сфера", "мир"], readings: {on: ["кай"], kun: []}, level: 3},
+				{kanji: "畑", meanings: ["поле", "плантация"], readings: {on: [], kun: ["хата", "хатакэ"]}, level: 3},
+				{kanji: "病", meanings: ["болеть", "болезнь"], readings: {on: ["бё:"], kun: ["ямай"]}, level: 3},
+				{kanji: "発", meanings: ["испускать (запах, свет и т.п.)"], readings: {on: ["хацу"], kun: []}, level: 3},
+				{kanji: "登", meanings: ["взбираться", "подниматься"], readings: {on: ["то:", "то"], kun: ["нобо-ру"]}, level: 3},
+				{kanji: "皮", meanings: ["кожа"], readings: {on: ["хи"], kun: ["кава"]}, level: 3},
+				{kanji: "皿", meanings: ["тарелка"], readings: {on: ["бэй"], kun: ["сара"]}, level: 3},
+				{kanji: "相", meanings: ["взаимный", "совместный"], readings: {on: ["со:"], kun: ["ай"]}, level: 3},
+				{kanji: "県", meanings: ["префектура"], readings: {on: ["кэн"], kun: ["ка-кэру"]}, level: 3},
+				{kanji: "真", meanings: ["правда", "истина"], readings: {on: ["син"], kun: ["ма"]}, level: 3},
+				{kanji: "着", meanings: ["прибытие", "прибывать", "носить"], readings: {on: ["тяку"], kun: ["ки-ру", "цу-ку"]}, level: 3},
+				{kanji: "短", meanings: ["короткий"], readings: {on: ["тан"], kun: ["мидзика-й"]}, level: 3},
+				{kanji: "研", meanings: ["точить"], readings: {on: ["кэн"], kun: ["то-гу"]}, level: 3},
+				{kanji: "礼", meanings: ["этикет", "поклон", "приветствие"], readings: {on: ["рэй"], kun: []}, level: 3},
+				{kanji: "神", meanings: ["божество"], readings: {on: ["син", "дзин"], kun: ["ками"]}, level: 3},
+				{kanji: "祭", meanings: ["праздник", "празднество", "фестиваль"], readings: {on: ["сай"], kun: ["мацу-ру"]}, level: 3},
+				{kanji: "福", meanings: ["счастье", "удача"], readings: {on: ["фуку"], kun: []}, level: 3},
+				{kanji: "秒", meanings: ["секунда"], readings: {on: ["бё:"], kun: []}, level: 3},
+				{kanji: "究", meanings: ["осваивать", "исследовать"], readings: {on: ["кю:"], kun: ["кива-мэру"]}, level: 3},
+				{kanji: "章", meanings: ["глава (книги)", "эмблема"], readings: {on: ["сё:"], kun: []}, level: 3},
+				{kanji: "童", meanings: ["дитя", "ребёнок"], readings: {on: ["до:"], kun: ["варабэ"]}, level: 3},
+				{kanji: "笛", meanings: ["флейта", "свист"], readings: {on: ["тэки"], kun: ["фуэ"]}, level: 3},
+				{kanji: "第", meanings: ["префикс числительных. Служит для образования порядковых числительных"], readings: {on: ["дай"], kun: []}, level: 3},
+				{kanji: "筆", meanings: ["кисть (для письма, рисования)"], readings: {on: ["хицу"], kun: ["фудэ"]}, level: 3},
+				{kanji: "等", meanings: ["равный", "класс", "разряд", "одинаковый"], readings: {on: ["то:"], kun: ["хито-сий"]}, level: 3},
+				{kanji: "箱", meanings: ["ящик", "коробка"], readings: {on: ["со:"], kun: ["хако"]}, level: 3},
+				{kanji: "級", meanings: ["разряд", "уровень", "ранг"], readings: {on: ["кю:"], kun: []}, level: 3},
+				{kanji: "終", meanings: ["конец", "заканчивать"], readings: {on: ["сю:"], kun: ["о-вару"]}, level: 3},
+				{kanji: "緑", meanings: ["зелёный"], readings: {on: ["рёку"], kun: ["мидори"]}, level: 3},
+				{kanji: "練", meanings: ["тренироваться", "тренировать"], readings: {on: ["рэн"], kun: ["нэ-ру"]}, level: 3},
+				{kanji: "羊", meanings: ["овца", "баран"], readings: {on: ["ё:"], kun: ["хицудзи"]}, level: 3},
+				{kanji: "美", meanings: ["красивый"], readings: {on: ["ми"], kun: ["уцуку-сий"]}, level: 3},
+				{kanji: "習", meanings: ["учиться"], readings: {on: ["сю:"], kun: ["нара-у"]}, level: 3},
+				{kanji: "者", meanings: ["человек", "некто"], readings: {on: ["ся"], kun: ["моно"]}, level: 3},
+				{kanji: "育", meanings: ["воспитывать", "растить", "высаживать"], readings: {on: ["ику"], kun: ["сода-цу"]}, level: 3},
+				{kanji: "苦", meanings: ["горький", "тяжёлый", "трудный"], readings: {on: ["ку"], kun: ["куру-сий", "нига-й"]}, level: 3},
+				{kanji: "荷", meanings: ["ноша", "груз", "багаж"], readings: {on: ["ка"], kun: ["ни"]}, level: 3},
+				{kanji: "落", meanings: ["падать", "сваливаться", "ронять"], readings: {on: ["раку"], kun: ["о-тиру"]}, level: 3},
+				{kanji: "葉", meanings: ["лист", "листья", "листва"], readings: {on: ["ё:"], kun: ["ха"]}, level: 3},
+				{kanji: "薬", meanings: ["лекарство"], readings: {on: ["яку"], kun: ["кусури"]}, level: 3},
+				{kanji: "血", meanings: ["кровь"], readings: {on: ["кэцу"], kun: ["ти"]}, level: 3},
+				{kanji: "表", meanings: ["выражать", "наружная сторона"], readings: {on: ["хё:"], kun: ["омотэ", "а-рава-су"]}, level: 3},
+				{kanji: "詩", meanings: ["стихи", "поэзия"], readings: {on: ["си"], kun: ["ута"]}, level: 3},
+				{kanji: "調", meanings: ["тон", "исследовать", "делать приготовления"], readings: {on: ["тё:"], kun: ["сира-бэру"]}, level: 3},
+				{kanji: "談", meanings: ["разговор", "беседа"], readings: {on: ["дан"], kun: []}, level: 3},
+				{kanji: "豆", meanings: ["боб", "горох"], readings: {on: ["то:", "дзу"], kun: ["мамэ"]}, level: 3},
+				{kanji: "負", meanings: ["отрицательный", "проигрывать", "нести на спине"], readings: {on: ["фу"], kun: ["ма-кэру", "о-у"]}, level: 3},
+				{kanji: "起", meanings: ["вставать", "просыпаться", "происходить", "будить"], readings: {on: ["ки"], kun: ["о-киру"]}, level: 3},
+				{kanji: "路", meanings: ["путь", "дорога"], readings: {on: ["ро"], kun: ["мити"]}, level: 3},
+				{kanji: "身", meanings: ["тело"], readings: {on: ["син"], kun: ["ми"]}, level: 3},
+				{kanji: "転", meanings: ["поворачиваться", "падать"], readings: {on: ["тэн"], kun: ["коро-бу"]}, level: 3},
+				{kanji: "軽", meanings: ["лёгкий"], readings: {on: ["кэй"], kun: ["кару-й"]}, level: 3},
+				{kanji: "農", meanings: ["земледелие"], readings: {on: ["но:"], kun: []}, level: 3},
+				{kanji: "返", meanings: ["ответ", "возвращать"], readings: {on: ["хэн"], kun: ["каэ-су"]}, level: 3},
+				{kanji: "追", meanings: ["преследовать", "гнать", "выгонять"], readings: {on: ["цуй"], kun: ["о-у"]}, level: 3},
+				{kanji: "送", meanings: ["посылать", "отправлять"], readings: {on: ["со:"], kun: ["о-ку-ру"]}, level: 3},
+				{kanji: "速", meanings: ["скорость", "быстрый", "немедленно"], readings: {on: ["соку"], kun: ["хая-й", "суми-яка"]}, level: 3},
+				{kanji: "進", meanings: ["продвигаться"], readings: {on: ["син"], kun: ["сусу-му"]}, level: 3},
+				{kanji: "遊", meanings: ["развлекаться"], readings: {on: ["ю:"], kun: ["а-со-бу"]}, level: 3},
+				{kanji: "運", meanings: ["судьба", "участь", "нести", "тащить", "счастье"], readings: {on: ["ун"], kun: ["хако-бу"]}, level: 3},
+				{kanji: "部", meanings: ["часть", "сектор"], readings: {on: ["бу"], kun: []}, level: 3},
+				{kanji: "都", meanings: ["столица"], readings: {on: ["то", "цу"], kun: ["мияко"]}, level: 3},
+				{kanji: "配", meanings: ["распределять"], readings: {on: ["хай"], kun: ["куба-ру"]}, level: 3},
+				{kanji: "酒", meanings: ["сакэ", "алкоголь", "спиртные напитки"], readings: {on: ["сю"], kun: ["сакэ", "сака"]}, level: 3},
+				{kanji: "重", meanings: ["тяжёлый", "важный", "складывать"], readings: {on: ["дзю:", "тё:"], kun: ["о-мо-й", "каса-нэру"]}, level: 3},
+				{kanji: "鉄", meanings: ["железо"], readings: {on: ["тэцу"], kun: ["куроганэ"]}, level: 3},
+				{kanji: "銀", meanings: ["серебро"], readings: {on: ["гин"], kun: ["сироганэ"]}, level: 3},
+				{kanji: "開", meanings: ["открывать", "открываться"], readings: {on: ["кай"], kun: ["хира-ку", "а-ку"]}, level: 3},
+				{kanji: "院", meanings: ["учреждение", "палата парламента"], readings: {on: ["ин"], kun: []}, level: 3},
+				{kanji: "陽", meanings: ["ян", "солнце"], readings: {on: ["ё:"], kun: ["хи"]}, level: 3},
+				{kanji: "階", meanings: ["этаж"], readings: {on: ["кай"], kun: ["кидзахаси"]}, level: 3},
+				{kanji: "集", meanings: ["собирать"], readings: {on: ["сю:"], kun: ["а-цу-мару"]}, level: 3},
+				{kanji: "面", meanings: ["лицо", "маска", "поверхность"], readings: {on: ["мэн"], kun: ["омотэ", "цура"]}, level: 3},
+				{kanji: "題", meanings: ["тема", "заглавие"], readings: {on: ["дай"], kun: []}, level: 3},
+				{kanji: "飲", meanings: ["пить"], readings: {on: ["ин"], kun: ["но-му"]}, level: 3},
+				{kanji: "館", meanings: ["здание", "дворец", "палаты"], readings: {on: ["кан"], kun: ["яката"]}, level: 3},
+				{kanji: "駅", meanings: ["станция", "вокзал"], readings: {on: ["эки"], kun: []}, level: 3},
+				{kanji: "鼻", meanings: ["нос"], readings: {on: ["би"], kun: ["хана"]}, level: 3},
+
+				// kyoiku_4.txt
+				{kanji: "不", meanings: ["префикс отрицания"], readings: {on: ["фу", "бу"], kun: []}, level: 4},
+				{kanji: "争", meanings: ["бороться"], readings: {on: ["со:"], kun: ["арасо:"]}, level: 4},
+				{kanji: "付", meanings: ["прикреплять", "присоединять"], readings: {on: ["фу"], kun: ["цу-ку"]}, level: 4},
+				{kanji: "令", meanings: ["приказ"], readings: {on: ["рэй"], kun: []}, level: 4},
+				{kanji: "以", meanings: ["префикс направления", "посредством"], readings: {on: ["и"], kun: []}, level: 4},
+				{kanji: "仲", meanings: ["посредник", "отношения"], readings: {on: ["тю:"], kun: ["нака"]}, level: 4},
+				{kanji: "伝", meanings: ["передавать", "сообщить", "двигаться", "вдоль"], readings: {on: ["дэн"], kun: ["цута-эру"]}, level: 4},
+				{kanji: "位", meanings: ["ранг", "чин", "звание"], readings: {on: ["и"], kun: ["курай"]}, level: 4},
+				{kanji: "低", meanings: ["низкий"], readings: {on: ["тэй"], kun: ["хику-й"]}, level: 4},
+				{kanji: "例", meanings: ["пример", "прибегать к сравнению"], readings: {on: ["рэй"], kun: ["тато-эру"]}, level: 4},
+				{kanji: "便", meanings: ["почта", "удобство", "известия"], readings: {on: ["бэн", "бин"], kun: ["таё-ри"]}, level: 4},
+				{kanji: "信", meanings: ["верить", "вера", "доверие"], readings: {on: ["син"], kun: []}, level: 4},
+				{kanji: "倉", meanings: ["амбар", "кладовая", "склад"], readings: {on: ["со:"], kun: ["кура"]}, level: 4},
+				{kanji: "候", meanings: ["погода"], readings: {on: ["ко:"], kun: []}, level: 4},
+				{kanji: "借", meanings: ["брать в долг/взаймы"], readings: {on: ["сяку"], kun: ["ка-риру"]}, level: 4},
+				{kanji: "停", meanings: ["приостанавливать"], readings: {on: ["тэй"], kun: []}, level: 4},
+				{kanji: "健", meanings: ["здоровый"], readings: {on: ["кэн"], kun: []}, level: 4},
+				{kanji: "側", meanings: ["сторона", "бок"], readings: {on: ["соку"], kun: ["кава"]}, level: 4},
+				{kanji: "働", meanings: ["работать"], readings: {on: ["до:"], kun: ["хатара-ку"]}, level: 4},
+				{kanji: "億", meanings: ["сто миллионов"], readings: {on: ["оку"], kun: []}, level: 4},
+				{kanji: "兆", meanings: ["триллион", "ростки", "побеги"], readings: {on: ["тё:"], kun: ["кидза-си"]}, level: 4},
+				{kanji: "児", meanings: ["дитя", "ребёнок"], readings: {on: ["дзи", "ни"], kun: ["ко"]}, level: 4},
+				{kanji: "共", meanings: ["совместный", "вместе"], readings: {on: ["кё:"], kun: ["томо"]}, level: 4},
+				{kanji: "兵", meanings: ["солдат", "боец", "воин"], readings: {on: ["хэй", "хё:"], kun: ["цувамоно"]}, level: 4},
+				{kanji: "典", meanings: ["справочник", "церемония", "обряд"], readings: {on: ["тэн"], kun: []}, level: 4},
+				{kanji: "冷", meanings: ["холодный", "остывать"], readings: {on: ["рэй"], kun: ["цумэ-тай", "хи-эру", "са-мэру"]}, level: 4},
+				{kanji: "初", meanings: ["первый", "начало"], readings: {on: ["сё"], kun: ["хацу", "хадзи-мэ"]}, level: 4},
+				{kanji: "別", meanings: ["отдельный", "разделяться"], readings: {on: ["бэцу"], kun: ["вака-рэру"]}, level: 4},
+				{kanji: "利", meanings: ["выгода", "оказывать эффект"], readings: {on: ["ри"], kun: []}, level: 4},
+				{kanji: "刷", meanings: ["печать"], readings: {on: ["сацу"], kun: ["су-ру"]}, level: 4},
+				{kanji: "副", meanings: ["вспомогательный"], readings: {on: ["фуку"], kun: []}, level: 4},
+				{kanji: "功", meanings: ["заслуга", "достижение"], readings: {on: ["ко:"], kun: []}, level: 4},
+				{kanji: "加", meanings: ["добавлять"], readings: {on: ["ка"], kun: ["кува-эру"]}, level: 4},
+				{kanji: "努", meanings: ["стараться"], readings: {on: ["до"], kun: ["цуто-мэру"]}, level: 4},
+				{kanji: "労", meanings: ["труд", "заботы", "беспокойство"], readings: {on: ["ро:"], kun: ["нэгира-у"]}, level: 4},
+				{kanji: "勇", meanings: ["храбрость", "ободриться"], readings: {on: ["ю:"], kun: ["иса-му"]}, level: 4},
+				{kanji: "包", meanings: ["обёртывать"], readings: {on: ["хо:"], kun: ["цуцу-му"]}, level: 4},
+				{kanji: "卒", meanings: ["солдат", "рядовой"], readings: {on: ["соцу"], kun: []}, level: 4},
+				{kanji: "協", meanings: ["сотрудничество"], readings: {on: ["кё:"], kun: []}, level: 4},
+				{kanji: "単", meanings: ["одиночный", "простой"], readings: {on: ["тан"], kun: []}, level: 4},
+				{kanji: "博", meanings: ["эрудиция"], readings: {on: ["хаку"], kun: []}, level: 4},
+				{kanji: "印", meanings: ["печать", "знак", "метка", "штамп", "штемпель"], readings: {on: ["ин"], kun: ["сируси"]}, level: 4},
+				{kanji: "参", meanings: ["участвовать", "отправляться"], readings: {on: ["сан"], kun: ["маи-ру"]}, level: 4},
+				{kanji: "史", meanings: ["история"], readings: {on: ["си"], kun: []}, level: 4},
+				{kanji: "司", meanings: ["управляющий"], readings: {on: ["си"], kun: []}, level: 4},
+				{kanji: "各", meanings: ["каждый"], readings: {on: ["каку"], kun: ["оно-оно"]}, level: 4},
+				{kanji: "告", meanings: ["объявлять", "сообщить", "провозглашать"], readings: {on: ["коку"], kun: ["цу-гэру"]}, level: 4},
+				{kanji: "周", meanings: ["кружиться", "круг"], readings: {on: ["сю:"], kun: ["мава-ри"]}, level: 4},
+				{kanji: "唱", meanings: ["распевать"], readings: {on: ["сё:"], kun: ["тона-эру"]}, level: 4},
+				{kanji: "喜", meanings: ["радость", "радоваться"], readings: {on: ["ки"], kun: ["ёроко-бу"]}, level: 4},
+				{kanji: "器", meanings: ["сосуд", "способности"], readings: {on: ["ки"], kun: ["уцува"]}, level: 4},
+				{kanji: "囲", meanings: ["окружать", "собираться вокруг", "брать в кольцо"], readings: {on: ["и"], kun: ["как-о:"]}, level: 4},
+				{kanji: "固", meanings: ["твёрдый", "твердеть"], readings: {on: ["ко"], kun: ["ката-мару"]}, level: 4},
+				{kanji: "型", meanings: ["тип", "модель", "форма"], readings: {on: ["кэй"], kun: ["ката"]}, level: 4},
+				{kanji: "堂", meanings: ["зал", "храм"], readings: {on: ["до:"], kun: []}, level: 4},
+				{kanji: "塩", meanings: ["соль"], readings: {on: ["эн"], kun: ["сио"]}, level: 4},
+				{kanji: "士", meanings: ["воин"], readings: {on: ["си"], kun: []}, level: 4},
+				{kanji: "変", meanings: ["меняться", "изменяться"], readings: {on: ["хэн"], kun: ["ка-вару"]}, level: 4},
+				{kanji: "夫", meanings: ["муж"], readings: {on: ["фу", "фу:", "бу"], kun: ["отто"]}, level: 4},
+				{kanji: "失", meanings: ["терять"], readings: {on: ["сицу"], kun: ["усина-у"]}, level: 4},
+				{kanji: "好", meanings: ["нравиться", "любить", "предпочитать"], readings: {on: ["ко:"], kun: ["су-ку", "коно-му"]}, level: 4},
+				{kanji: "季", meanings: ["сезон", "время года"], readings: {on: ["ки"], kun: []}, level: 4},
+				{kanji: "孫", meanings: ["внук", "внучка"], readings: {on: ["сон"], kun: ["маго"]}, level: 4},
+				{kanji: "完", meanings: ["завершение"], readings: {on: ["кан"], kun: []}, level: 4},
+				{kanji: "官", meanings: ["чиновник", "государственная служба"], readings: {on: ["кан"], kun: []}, level: 4},
+				{kanji: "害", meanings: ["вред"], readings: {on: ["гай"], kun: []}, level: 4},
+				{kanji: "察", meanings: ["инспектировать", "полиция (в просторечии)"], readings: {on: ["сацу"], kun: []}, level: 4},
+				{kanji: "巣", meanings: ["гнездо", "нора"], readings: {on: ["со:"], kun: ["су"]}, level: 4},
+				{kanji: "差", meanings: ["разница"], readings: {on: ["са"], kun: []}, level: 4},
+				{kanji: "希", meanings: ["редкий"], readings: {on: ["ки"], kun: ["марэ"]}, level: 4},
+				{kanji: "席", meanings: ["место для сиденья"], readings: {on: ["сэки"], kun: []}, level: 4},
+				{kanji: "帯", meanings: ["пояс"], readings: {on: ["тай"], kun: ["оби"]}, level: 4},
+				{kanji: "底", meanings: ["дно"], readings: {on: ["тэй"], kun: ["соко"]}, level: 4},
+				{kanji: "府", meanings: ["правительство"], readings: {on: ["фу"], kun: []}, level: 4},
+				{kanji: "康", meanings: ["здоровье"], readings: {on: ["ко:"], kun: []}, level: 4},
+				{kanji: "建", meanings: ["строить"], readings: {on: ["кэн"], kun: ["та-тэру"]}, level: 4},
+				{kanji: "径", meanings: ["диаметр"], readings: {on: ["кэй"], kun: []}, level: 4},
+				{kanji: "徒", meanings: ["последователь"], readings: {on: ["то"], kun: []}, level: 4},
+				{kanji: "得", meanings: ["прибыль", "получать"], readings: {on: ["току"], kun: ["э-ру"]}, level: 4},
+				{kanji: "必", meanings: ["обязательно"], readings: {on: ["хицу"], kun: ["канара-дзу"]}, level: 4},
+				{kanji: "念", meanings: ["мысль", "сознание", "чувство"], readings: {on: ["нэн"], kun: []}, level: 4},
+				{kanji: "愛", meanings: ["любовь"], readings: {on: ["ай"], kun: []}, level: 4},
+				{kanji: "成", meanings: ["становиться"], readings: {on: ["сэй"], kun: ["на-ру"]}, level: 4},
+				{kanji: "戦", meanings: ["война", "сражение", "сражаться"], readings: {on: ["сэн"], kun: ["икуса", "татака-у"]}, level: 4},
+				{kanji: "折", meanings: ["сгибать", "ломать"], readings: {on: ["сэцу"], kun: ["о-ру"]}, level: 4},
+				{kanji: "挙", meanings: ["поднимать"], readings: {on: ["кё"], kun: ["а-гэру"]}, level: 4},
+				{kanji: "改", meanings: ["изменять", "переменять"], readings: {on: ["кай"], kun: ["арата-мэру"]}, level: 4},
+				{kanji: "救", meanings: ["спасать"], readings: {on: ["кю:"], kun: ["суку-у"]}, level: 4},
+				{kanji: "敗", meanings: ["поражение", "потерпеть поражение"], readings: {on: ["хай"], kun: ["ябу-рэру"]}, level: 4},
+				{kanji: "散", meanings: ["разбрасывать", "рассыпаться", "рассеивать"], readings: {on: ["сан"], kun: ["ти-ру"]}, level: 4},
+				{kanji: "料", meanings: ["плата"], readings: {on: ["рё:"], kun: []}, level: 4},
+				{kanji: "旗", meanings: ["флаг", "знамя"], readings: {on: ["ки"], kun: ["хата"]}, level: 4},
+				{kanji: "昨", meanings: ["вчера", "прошлый"], readings: {on: ["саку"], kun: []}, level: 4},
+				{kanji: "景", meanings: ["пейзаж"], readings: {on: ["кэй"], kun: []}, level: 4},
+				{kanji: "最", meanings: ["самый", "наиболее"], readings: {on: ["сай"], kun: ["мо", "мотто-мо"]}, level: 4},
+				{kanji: "望", meanings: ["надеяться"], readings: {on: ["бо:"], kun: ["нодзо-му"]}, level: 4},
+				{kanji: "未", meanings: ["ещё не-"], readings: {on: ["ми"], kun: ["има-да"]}, level: 4},
+				{kanji: "末", meanings: ["окончание"], readings: {on: ["мацу"], kun: ["суэ"]}, level: 4},
+				{kanji: "札", meanings: ["этикетка", "ярлык", "бумажные деньги"], readings: {on: ["сацу"], kun: ["фуда"]}, level: 4},
+				{kanji: "材", meanings: ["материал"], readings: {on: ["дзай"], kun: []}, level: 4},
+				{kanji: "束", meanings: ["связка", "пучок"], readings: {on: ["соку"], kun: ["таба", "цука"]}, level: 4},
+				{kanji: "松", meanings: ["сосна"], readings: {on: ["сё:"], kun: ["мацу"]}, level: 4},
+				{kanji: "果", meanings: ["плод", "исполнять", "выполнить"], readings: {on: ["ка"], kun: ["ха-тасу"]}, level: 4},
+				{kanji: "栄", meanings: ["расцвет", "величие", "процветать"], readings: {on: ["эй"], kun: ["сака-эру"]}, level: 4},
+				{kanji: "案", meanings: ["проект", "идея", "мнение"], readings: {on: ["ан"], kun: []}, level: 4},
+				{kanji: "梅", meanings: ["слива"], readings: {on: ["бай"], kun: ["умэ"]}, level: 4},
+				{kanji: "械", meanings: ["механизм"], readings: {on: ["кай"], kun: []}, level: 4},
+				{kanji: "極", meanings: ["полюс", "предел", "доводить до крайности"], readings: {on: ["кёку"], kun: ["кива-мэру"]}, level: 4},
+				{kanji: "標", meanings: ["знак"], readings: {on: ["хё:"], kun: []}, level: 4},
+				{kanji: "機", meanings: ["механизм", "ткацкий станок"], readings: {on: ["ки"], kun: ["хата"]}, level: 4},
+				{kanji: "欠", meanings: ["недостача", "недоставать", "не хватать", "зевота"], readings: {on: ["кэцу"], kun: ["ка-кэру"]}, level: 4},
+				{kanji: "歴", meanings: ["карьера", "почётный"], readings: {on: ["рэки"], kun: []}, level: 4},
+				{kanji: "残", meanings: ["оставаться", "остаток"], readings: {on: ["дзан"], kun: ["ноко-ру"]}, level: 4},
+				{kanji: "殺", meanings: ["убить"], readings: {on: ["сацу"], kun: ["коро-су"]}, level: 4},
+				{kanji: "毒", meanings: ["яд"], readings: {on: ["доку"], kun: []}, level: 4},
+				{kanji: "氏", meanings: ["господин", "род", "родословная", "происхождение"], readings: {on: ["си"], kun: ["удзи"]}, level: 4},
+				{kanji: "民", meanings: ["народ"], readings: {on: ["мин"], kun: ["тами"]}, level: 4},
+				{kanji: "求", meanings: ["требовать", "просить"], readings: {on: ["кю:"], kun: ["мото-му"]}, level: 4},
+				{kanji: "治", meanings: ["лечить", "управлять", "руководить"], readings: {on: ["ти", "дзи"], kun: ["оса-мэру", "нао-ру"]}, level: 4},
+				{kanji: "法", meanings: ["закон", "делитель", "модуль (в математике)"], readings: {on: ["хо:"], kun: []}, level: 4},
+				{kanji: "泣", meanings: ["плакать"], readings: {on: ["кю:"], kun: ["на-ку"]}, level: 4},
+				{kanji: "浅", meanings: ["мелкий"], readings: {on: ["сэн"], kun: ["аса-й"]}, level: 4},
+				{kanji: "浴", meanings: ["купаться", "обливаться"], readings: {on: ["ёку"], kun: ["а-биру"]}, level: 4},
+				{kanji: "清", meanings: ["чистый"], readings: {on: ["сэй", "сё:"], kun: ["кё-рака"]}, level: 4},
+				{kanji: "満", meanings: ["полный"], readings: {on: ["ман"], kun: ["ми-тиру"]}, level: 4},
+				{kanji: "漁", meanings: ["рыболовство", "ловить рыбу"], readings: {on: ["рё:", "гё:"], kun: ["аса-ру"]}, level: 4},
+				{kanji: "灯", meanings: ["лампа", "свет", "освещение"], readings: {on: ["то:"], kun: ["хи"]}, level: 4},
+				{kanji: "無", meanings: ["без", "не иметься"], readings: {on: ["му", "бу"], kun: ["на-й"]}, level: 4},
+				{kanji: "然", meanings: ["так", "однако", "тем не менее"], readings: {on: ["дзэн", "нэн"], kun: ["сика-си"]}, level: 4},
+				{kanji: "焼", meanings: ["сжигать", "жарить", "печь"], readings: {on: ["сё:"], kun: ["я-ку"]}, level: 4},
+				{kanji: "照", meanings: ["светить"], readings: {on: ["сё"], kun: ["тэ-расу"]}, level: 4},
+				{kanji: "熱", meanings: ["горячий"], readings: {on: ["нэцу"], kun: ["ацу-и"]}, level: 4},
+				{kanji: "牧", meanings: ["пасти", "пастбище"], readings: {on: ["боку"], kun: ["маки"]}, level: 4},
+				{kanji: "特", meanings: ["особый"], readings: {on: ["току"], kun: []}, level: 4},
+				{kanji: "産", meanings: ["рождать"], readings: {on: ["сан"], kun: ["у-му"]}, level: 4},
+				{kanji: "的", meanings: ["цель", "мишень"], readings: {on: ["тэки"], kun: ["мато"]}, level: 4},
+				{kanji: "省", meanings: ["министерство", "рефлексировать", "исключать"], readings: {on: ["сё", "сэй"], kun: ["хабу-ку"]}, level: 4},
+				{kanji: "祝", meanings: ["праздновать"], readings: {on: ["сюку"], kun: ["ива-у"]}, level: 4},
+				{kanji: "票", meanings: ["голосовать"], readings: {on: ["хё:"], kun: []}, level: 4},
+				{kanji: "種", meanings: ["разновидность", "семя", "сорт", "вид"], readings: {on: ["сю"], kun: ["танэ"]}, level: 4},
+				{kanji: "積", meanings: ["нагромождать"], readings: {on: ["сэки"], kun: ["цу-му"]}, level: 4},
+				{kanji: "競", meanings: ["состязаться", "соперничать", "делать ставку"], readings: {on: ["кё:"], kun: ["кисо-у"]}, level: 4},
+				{kanji: "笑", meanings: ["смех", "смеяться", "улыбаться"], readings: {on: ["сё"], kun: ["вара-у"]}, level: 4},
+				{kanji: "管", meanings: ["труба", "трубка"], readings: {on: ["кан"], kun: ["куда"]}, level: 4},
+				{kanji: "節", meanings: ["сустав", "узел", "утолщение", "нарост"], readings: {on: ["сэцу"], kun: ["фуси"]}, level: 4},
+				{kanji: "粉", meanings: ["порошок", "мука"], readings: {on: ["фун"], kun: ["ко", "кона"]}, level: 4},
+				{kanji: "紀", meanings: ["эра"], readings: {on: ["ки"], kun: []}, level: 4},
+				{kanji: "約", meanings: ["приблизительно", "обещание", "сокращение"], readings: {on: ["яку"], kun: []}, level: 4},
+				{kanji: "結", meanings: ["узел", "связывать", "делать причёску"], readings: {on: ["кэцу"], kun: ["мусу-бу", "ю-у"]}, level: 4},
+				{kanji: "給", meanings: ["снабжать"], readings: {on: ["кю:"], kun: ["тама-у"]}, level: 4},
+				{kanji: "続", meanings: ["продолжаться"], readings: {on: ["дзоку"], kun: ["цудзу-ку"]}, level: 4},
+				{kanji: "置", meanings: ["класть", "ставить"], readings: {on: ["ти"], kun: ["о-ку"]}, level: 4},
+				{kanji: "老", meanings: ["старик", "стареть"], readings: {on: ["ро:"], kun: ["о-иру"]}, level: 4},
+				{kanji: "胃", meanings: ["желудок"], readings: {on: ["и"], kun: []}, level: 4},
+				{kanji: "脈", meanings: ["жила", "пульс"], readings: {on: ["мяку"], kun: []}, level: 4},
+				{kanji: "腸", meanings: ["кишечник", "внутренности"], readings: {on: ["тё:"], kun: ["харавата"]}, level: 4},
+				{kanji: "臣", meanings: ["вассал", "подданный"], readings: {on: ["син"], kun: []}, level: 4},
+				{kanji: "航", meanings: ["курсировать", "идти (о судне)"], readings: {on: ["ко:"], kun: []}, level: 4},
+				{kanji: "良", meanings: ["хороший"], readings: {on: ["рё:"], kun: ["ё-й"]}, level: 4},
+				{kanji: "芸", meanings: ["искусство", "мастерство", "талант"], readings: {on: ["гэй"], kun: []}, level: 4},
+				{kanji: "芽", meanings: ["бутон", "почка", "побег"], readings: {on: ["га"], kun: ["мэ"]}, level: 4},
+				{kanji: "英", meanings: ["Британия", "венчик"], readings: {on: ["эй"], kun: []}, level: 4},
+				{kanji: "菜", meanings: ["овощи"], readings: {on: ["сай"], kun: ["на"]}, level: 4},
+				{kanji: "街", meanings: ["улица", "кварталы"], readings: {on: ["гай"], kun: ["мати"]}, level: 4},
+				{kanji: "衣", meanings: ["одежда"], readings: {on: ["и"], kun: ["коромо"]}, level: 4},
+				{kanji: "要", meanings: ["требоваться", "кнопка", "главное", "суть"], readings: {on: ["е:"], kun: ["и-ру"]}, level: 4},
+				{kanji: "覚", meanings: ["ощущение", "помнить", "просыпаться"], readings: {on: ["каку"], kun: ["обо-эру", "са-мэру"]}, level: 4},
+				{kanji: "観", meanings: ["осматривать", "внешний вид", "взгляд"], readings: {on: ["кан"], kun: ["ми-ру"]}, level: 4},
+				{kanji: "訓", meanings: ["наставление"], readings: {on: ["кун"], kun: []}, level: 4},
+				{kanji: "試", meanings: ["испытание", "испытывать", "проверять"], readings: {on: ["си"], kun: ["коккоми-ру", "тамэ-су"]}, level: 4},
+				{kanji: "説", meanings: ["теория", "объяснять", "разъяснять"], readings: {on: ["сэцу"], kun: ["то-ку"]}, level: 4},
+				{kanji: "課", meanings: ["отдел", "секция"], readings: {on: ["ка"], kun: []}, level: 4},
+				{kanji: "議", meanings: ["обсуждение"], readings: {on: ["ги"], kun: []}, level: 4},
+				{kanji: "象", meanings: ["слон", "явление"], readings: {on: ["дзо:", "сё:"], kun: []}, level: 4},
+				{kanji: "貨", meanings: ["монета"], readings: {on: ["ка"], kun: []}, level: 4},
+				{kanji: "貯", meanings: ["копить"], readings: {on: ["тё"], kun: ["та-мэру"]}, level: 4},
+				{kanji: "費", meanings: ["расходы", "тратить"], readings: {on: ["хи"], kun: ["цуи-ясу"]}, level: 4},
+				{kanji: "賞", meanings: ["награда"], readings: {on: ["сё:"], kun: []}, level: 4},
+				{kanji: "軍", meanings: ["армия", "войска"], readings: {on: ["гун"], kun: []}, level: 4},
+				{kanji: "輪", meanings: ["колесо", "кольцо"], readings: {on: ["рин"], kun: ["ва"]}, level: 4},
+				{kanji: "辞", meanings: ["отставка", "уходить в отставку", "слово", "речь", "обращение"], readings: {on: ["дзи"], kun: ["я-мэру"]}, level: 4},
+				{kanji: "辺", meanings: ["окрестности"], readings: {on: ["хэн"], kun: ["ата-ри"]}, level: 4},
+				{kanji: "連", meanings: ["связь", "брать с собой", "ставить в ряд"], readings: {on: ["рэн"], kun: ["цу-нэру", "цура-нэру"]}, level: 4},
+				{kanji: "達", meanings: ["достигать"], readings: {on: [], kun: ["тати"]}, level: 4},
+				{kanji: "選", meanings: ["выбирать"], readings: {on: ["сэн"], kun: ["эра-бу"]}, level: 4},
+				{kanji: "郡", meanings: ["уезд"], readings: {on: ["гун"], kun: []}, level: 4},
+				{kanji: "量", meanings: ["количество", "измерять"], readings: {on: ["рё:"], kun: []}, level: 4},
+				{kanji: "録", meanings: ["запись", "вносить", "регистрироваться"], readings: {on: ["року"], kun: []}, level: 4},
+				{kanji: "鏡", meanings: ["зеркало"], readings: {on: ["кё:"], kun: ["кагами"]}, level: 4},
+				{kanji: "関", meanings: ["застава", "барьер", "иметь отношение"], readings: {on: ["кан"], kun: ["сэки", "кака-вару"]}, level: 4},
+				{kanji: "陸", meanings: ["суша"], readings: {on: ["рику"], kun: []}, level: 4},
+				{kanji: "隊", meanings: ["отряд"], readings: {on: ["тай"], kun: []}, level: 4},
+				{kanji: "静", meanings: ["тихий", "спокойный"], readings: {on: ["сэй"], kun: ["сидзу-ка"]}, level: 4},
+				{kanji: "順", meanings: ["порядок", "очередь"], readings: {on: ["дзюн"], kun: []}, level: 4},
+				{kanji: "願", meanings: ["просьба", "просить", "молить"], readings: {on: ["ган"], kun: ["нега-у"]}, level: 4},
+				{kanji: "類", meanings: ["сорт", "разновидность"], readings: {on: ["руй"], kun: ["тагу-й"]}, level: 4},
+				{kanji: "飛", meanings: ["летать"], readings: {on: ["хи"], kun: ["то-бу"]}, level: 4},
+				{kanji: "飯", meanings: ["варёный рис", "пища", "еда"], readings: {on: ["хан"], kun: ["мэси"]}, level: 4},
+				{kanji: "養", meanings: ["вскармливать", "растить", "воспитывать"], readings: {on: ["ё:"], kun: ["ясина-у"]}, level: 4},
+				{kanji: "験", meanings: ["испытывать"], readings: {on: ["кэн", "гэн"], kun: []}, level: 4},
+
+				// kyoiku_5.txt
+				{kanji: "久", meanings: ["долгий"], readings: {on: ["кю:"], kun: ["хиса"]}, level: 5},
+				{kanji: "仏", meanings: ["Будда"], readings: {on: ["фуцу", "буцу"], kun: ["хотокэ"]}, level: 5},
+				{kanji: "仮", meanings: ["временный"], readings: {on: ["ка", "кэ"], kun: ["кари"]}, level: 5},
+				{kanji: "件", meanings: ["происшествие", "случай"], readings: {on: ["кэн"], kun: []}, level: 5},
+				{kanji: "任", meanings: ["назначить", "поручить", "доверять"], readings: {on: ["нин"], kun: ["мака-сэру"]}, level: 5},
+				{kanji: "似", meanings: ["похожий", "быть похожим"], readings: {on: ["дзи"], kun: ["ни-ру"]}, level: 5},
+				{kanji: "余", meanings: ["излишек", "быть в избытке"], readings: {on: ["ё"], kun: ["ама-ру"]}, level: 5},
+				{kanji: "価", meanings: ["цена", "стоимость"], readings: {on: ["ка"], kun: ["атай"]}, level: 5},
+				{kanji: "保", meanings: ["сохранять"], readings: {on: ["хо"], kun: ["тамо-цу"]}, level: 5},
+				{kanji: "修", meanings: ["учиться", "овладевать (знаниями)"], readings: {on: ["сю:"], kun: ["оса-мэру"]}, level: 5},
+				{kanji: "俵", meanings: ["соломенный мешок"], readings: {on: ["хё:"], kun: ["тавара"]}, level: 5},
+				{kanji: "個", meanings: ["индивидуальный"], readings: {on: ["ко", "ка"], kun: []}, level: 5},
+				{kanji: "備", meanings: ["приготовления", "запасать"], readings: {on: ["би"], kun: ["сона-эру"]}, level: 5},
+				{kanji: "像", meanings: ["изображение", "статуя"], readings: {on: ["дзо:"], kun: []}, level: 5},
+				{kanji: "再", meanings: ["вторично", "повторно"], readings: {on: ["сай", "са"], kun: ["футата-би"]}, level: 5},
+				{kanji: "刊", meanings: ["издавать (книгу, журнал)"], readings: {on: ["кан"], kun: []}, level: 5},
+				{kanji: "判", meanings: ["судить", "оттиск печати", "личная печать"], readings: {on: ["хан"], kun: ["вака-ру"]}, level: 5},
+				{kanji: "制", meanings: ["система"], readings: {on: ["сэй"], kun: []}, level: 5},
+				{kanji: "券", meanings: ["билет", "облигация", "талон", "свидетельство"], readings: {on: ["кэн"], kun: []}, level: 5},
+				{kanji: "則", meanings: ["правила", "придерживаться", "следовать"], readings: {on: ["соку"], kun: ["нотто-ру"]}, level: 5},
+				{kanji: "効", meanings: ["эффект", "быть эффективным"], readings: {on: ["ко:"], kun: ["ки-ку"]}, level: 5},
+				{kanji: "務", meanings: ["дела", "исполнять обязанности"], readings: {on: ["му"], kun: ["цуто-мэру"]}, level: 5},
+				{kanji: "勢", meanings: ["энергия", "сила", "мощь"], readings: {on: ["сэй"], kun: ["икио-й"]}, level: 5},
+				{kanji: "厚", meanings: ["толстый"], readings: {on: ["ко:"], kun: ["ацу-й"]}, level: 5},
+				{kanji: "句", meanings: ["фраза"], readings: {on: ["ку"], kun: []}, level: 5},
+				{kanji: "可", meanings: ["одобрять"], readings: {on: ["ка"], kun: []}, level: 5},
+				{kanji: "営", meanings: ["бизнес", "заниматься", "управлять"], readings: {on: ["эй"], kun: ["итона-му"]}, level: 5},
+				{kanji: "因", meanings: ["причина", "проистекать из чего-либо"], readings: {on: ["ин"], kun: ["ё-ру"]}, level: 5},
+				{kanji: "団", meanings: ["группа"], readings: {on: ["дан", "тон"], kun: []}, level: 5},
+				{kanji: "圧", meanings: ["давление", "давить", "жать"], readings: {on: ["ацу"], kun: []}, level: 5},
+				{kanji: "在", meanings: ["находиться"], readings: {on: ["дзай"], kun: ["а-ру"]}, level: 5},
+				{kanji: "均", meanings: ["равнять"], readings: {on: ["кин"], kun: []}, level: 5},
+				{kanji: "基", meanings: ["основа"], readings: {on: ["ки"], kun: ["мото-дзуку"]}, level: 5},
+				{kanji: "報", meanings: ["информация"], readings: {on: ["хо:"], kun: ["муку-иру"]}, level: 5},
+				{kanji: "境", meanings: ["граница"], readings: {on: ["кё:"], kun: ["сакаи"]}, level: 5},
+				{kanji: "墓", meanings: ["могила"], readings: {on: ["бо"], kun: ["хака"]}, level: 5},
+				{kanji: "増", meanings: ["увеличиваться"], readings: {on: ["дзо:"], kun: ["ма-су", "фу-эру"]}, level: 5},
+				{kanji: "夢", meanings: ["сновидение"], readings: {on: ["му"], kun: ["юмэ"]}, level: 5},
+				{kanji: "妻", meanings: ["жена"], readings: {on: ["сай"], kun: ["цума"]}, level: 5},
+				{kanji: "婦", meanings: ["дама"], readings: {on: ["фу"], kun: []}, level: 5},
+				{kanji: "容", meanings: ["вмещать"], readings: {on: ["ё:"], kun: ["и-рэру", "катати"]}, level: 5},
+				{kanji: "寄", meanings: ["подходить"], readings: {on: ["ки"], kun: ["ё-ру"]}, level: 5},
+				{kanji: "富", meanings: ["богатство"], readings: {on: ["фу"], kun: ["томи"]}, level: 5},
+				{kanji: "導", meanings: ["вести"], readings: {on: ["до:"], kun: ["митиби-ку"]}, level: 5},
+				{kanji: "居", meanings: ["проживать"], readings: {on: ["кё"], kun: ["и-ру"]}, level: 5},
+				{kanji: "属", meanings: ["принадлежать"], readings: {on: ["дзоку"], kun: []}, level: 5},
+				{kanji: "布", meanings: ["ткань"], readings: {on: ["фу"], kun: ["нуно", "си-ку"]}, level: 5},
+				{kanji: "師", meanings: ["учитель"], readings: {on: ["си"], kun: []}, level: 5},
+				{kanji: "常", meanings: ["обычный"], readings: {on: ["дзё:"], kun: ["цунэ"]}, level: 5},
+				{kanji: "幹", meanings: ["ствол"], readings: {on: ["кан"], kun: ["мики"]}, level: 5},
+				{kanji: "序", meanings: ["введение"], readings: {on: ["дзё"], kun: ["цуй-дэ"]}, level: 5},
+				{kanji: "弁", meanings: ["различать"], readings: {on: ["бэн"], kun: []}, level: 5},
+				{kanji: "張", meanings: ["натягивать"], readings: {on: ["тё:"], kun: ["ха-ру"]}, level: 5},
+				{kanji: "往", meanings: ["направляться"], readings: {on: ["о:"], kun: []}, level: 5},
+				{kanji: "復", meanings: ["восстановление"], readings: {on: ["фуку"], kun: []}, level: 5},
+				{kanji: "徳", meanings: ["нравственность"], readings: {on: ["току"], kun: []}, level: 5},
+				{kanji: "志", meanings: ["воля"], readings: {on: ["си"], kun: ["кокородзаси"]}, level: 5},
+				{kanji: "応", meanings: ["реагирование"], readings: {on: ["о:"], kun: []}, level: 5},
+				{kanji: "快", meanings: ["приятный"], readings: {on: ["кай"], kun: ["кокороё-й"]}, level: 5},
+				{kanji: "性", meanings: ["характер"], readings: {on: ["сэй", "сё:"], kun: ["сага"]}, level: 5},
+				{kanji: "恩", meanings: ["признательность"], readings: {on: ["он"], kun: []}, level: 5},
+				{kanji: "情", meanings: ["чувство"], readings: {on: ["дзё:"], kun: ["наса-кэ"]}, level: 5},
+				{kanji: "態", meanings: ["состояние"], readings: {on: ["тай"], kun: ["вадза-то"]}, level: 5},
+				{kanji: "慣", meanings: ["обыкновение"], readings: {on: ["кан"], kun: ["на-рэру"]}, level: 5},
+				{kanji: "承", meanings: ["соглашаться"], readings: {on: ["сё:"], kun: ["укэтамава-ру"]}, level: 5},
+				{kanji: "技", meanings: ["мастерство"], readings: {on: ["ги"], kun: ["вадза"]}, level: 5},
+				{kanji: "招", meanings: ["приглашать"], readings: {on: ["сё:"], kun: ["манэ-ку"]}, level: 5},
+				{kanji: "授", meanings: ["предоставлять"], readings: {on: ["дзю"], kun: ["садзу-кэру"]}, level: 5},
+				{kanji: "採", meanings: ["добывать"], readings: {on: ["сай"], kun: ["то-ру"]}, level: 5},
+				{kanji: "接", meanings: ["соединять"], readings: {on: ["сэцу"], kun: ["цу-гу"]}, level: 5},
+				{kanji: "提", meanings: ["предлагать"], readings: {on: ["тэй"], kun: ["са-гэру"]}, level: 5},
+				{kanji: "損", meanings: ["убыток"], readings: {on: ["сон"], kun: ["соко-нэру"]}, level: 5},
+				{kanji: "支", meanings: ["филиал"], readings: {on: ["си"], kun: ["саса-эру"]}, level: 5},
+				{kanji: "政", meanings: ["политика"], readings: {on: ["сэй"], kun: ["мацуригото"]}, level: 5},
+				{kanji: "故", meanings: ["происшествие"], readings: {on: ["ко"], kun: ["юэ"]}, level: 5},
+				{kanji: "敵", meanings: ["враг"], readings: {on: ["тэки"], kun: ["катаки"]}, level: 5},
+				{kanji: "断", meanings: ["прерывать"], readings: {on: ["дан"], kun: ["та-цу", "котова-ру"]}, level: 5},
+				{kanji: "旧", meanings: ["прежний"], readings: {on: ["кю:"], kun: ["мото", "фуру-й"]}, level: 5},
+				{kanji: "易", meanings: ["лёгкий"], readings: {on: ["эки"], kun: ["яса-сий"]}, level: 5},
+				{kanji: "暴", meanings: ["насилие"], readings: {on: ["бо:"], kun: ["аба-ку"]}, level: 5},
+				{kanji: "条", meanings: ["статья"], readings: {on: ["дзё:"], kun: []}, level: 5},
+				{kanji: "枝", meanings: ["ветка"], readings: {on: ["си"], kun: ["эда"]}, level: 5},
+				{kanji: "査", meanings: ["расследовать"], readings: {on: ["са"], kun: []}, level: 5},
+				{kanji: "格", meanings: ["разряд"], readings: {on: ["каку"], kun: []}, level: 5},
+				{kanji: "桜", meanings: ["вишня"], readings: {on: ["о:"], kun: ["сакура"]}, level: 5},
+				{kanji: "検", meanings: ["расследовать"], readings: {on: ["кэн"], kun: []}, level: 5},
+				{kanji: "構", meanings: ["структура"], readings: {on: ["ко:"], kun: ["кама-эру"]}, level: 5},
+				{kanji: "武", meanings: ["военный"], readings: {on: ["бу", "му"], kun: []}, level: 5},
+				{kanji: "比", meanings: ["сравнивать"], readings: {on: ["хи"], kun: ["кура-бэру"]}, level: 5},
+				{kanji: "永", meanings: ["вечный"], readings: {on: ["эй"], kun: ["нага-й"]}, level: 5},
+				{kanji: "河", meanings: ["река"], readings: {on: ["ка"], kun: ["кава"]}, level: 5},
+				{kanji: "液", meanings: ["жидкость"], readings: {on: ["эки"], kun: []}, level: 5},
+				{kanji: "混", meanings: ["смешивать"], readings: {on: ["кон"], kun: ["ма-дзару"]}, level: 5},
+				{kanji: "減", meanings: ["уменьшаться"], readings: {on: ["гэн"], kun: ["хэ-ру"]}, level: 5},
+				{kanji: "測", meanings: ["измерять"], readings: {on: ["соку"], kun: ["хака-ру"]}, level: 5},
+				{kanji: "準", meanings: ["неполный"], readings: {on: ["дзюн"], kun: ["надзора-эру"]}, level: 5},
+				{kanji: "演", meanings: ["исполнять"], readings: {on: ["эн"], kun: []}, level: 5},
+				{kanji: "潔", meanings: ["чистота"], readings: {on: ["кэцу"], kun: ["исагиё-й"]}, level: 5},
+				{kanji: "災", meanings: ["бедствие"], readings: {on: ["сай"], kun: ["вадзава-и"]}, level: 5},
+				{kanji: "燃", meanings: ["гореть"], readings: {on: ["нэн"], kun: ["мо-эру"]}, level: 5},
+				{kanji: "版", meanings: ["издание"], readings: {on: ["хан"], kun: []}, level: 5},
+				{kanji: "犯", meanings: ["преступник"], readings: {on: ["хан", "бон"], kun: ["ока-су"]}, level: 5},
+				{kanji: "状", meanings: ["форма"], readings: {on: ["дзё:"], kun: []}, level: 5},
+				{kanji: "独", meanings: ["сам"], readings: {on: ["доку"], kun: ["хито-ри"]}, level: 5},
+				{kanji: "率", meanings: ["показатель"], readings: {on: ["рицу", "соцу"], kun: ["хики-иру"]}, level: 5},
+				{kanji: "現", meanings: ["действительный"], readings: {on: ["гэн"], kun: ["арава-рэру"]}, level: 5},
+				{kanji: "留", meanings: ["пребывать"], readings: {on: ["рю", "ру"], kun: ["тодо-мару"]}, level: 5},
+				{kanji: "略", meanings: ["сокращение"], readings: {on: ["ряку"], kun: []}, level: 5},
+				{kanji: "益", meanings: ["польза"], readings: {on: ["эки"], kun: ["ма-су"]}, level: 5},
+				{kanji: "眼", meanings: ["глаз"], readings: {on: ["ган"], kun: ["мэ", "манако"]}, level: 5},
+				{kanji: "破", meanings: ["ломать"], readings: {on: ["ха"], kun: ["ябу-ру"]}, level: 5},
+				{kanji: "確", meanings: ["определённый"], readings: {on: ["каку"], kun: ["таси-ка"]}, level: 5},
+				{kanji: "示", meanings: ["указывать"], readings: {on: ["дзи", "си"], kun: ["симэ-су"]}, level: 5},
+				{kanji: "祖", meanings: ["предок"], readings: {on: ["со"], kun: []}, level: 5},
+				{kanji: "禁", meanings: ["запрет"], readings: {on: ["кин"], kun: []}, level: 5},
+				{kanji: "移", meanings: ["перемещаться"], readings: {on: ["и"], kun: ["уцу-ру"]}, level: 5},
+				{kanji: "程", meanings: ["мера"], readings: {on: ["тэй"], kun: ["ходо"]}, level: 5},
+				{kanji: "税", meanings: ["налог"], readings: {on: ["дзэй"], kun: []}, level: 5},
+				{kanji: "築", meanings: ["строительство"], readings: {on: ["тику"], kun: ["кидзу-ку"]}, level: 5},
+				{kanji: "精", meanings: ["жизненная энергия"], readings: {on: ["сэй"], kun: ["сира-гэру"]}, level: 5},
+				{kanji: "素", meanings: ["элемент"], readings: {on: ["су", "со"], kun: ["мото"]}, level: 5},
+				{kanji: "経", meanings: ["приходить"], readings: {on: ["кэй", "кё:"], kun: ["хэ-ру"]}, level: 5},
+				{kanji: "統", meanings: ["объединять"], readings: {on: ["то:"], kun: ["су-бэру"]}, level: 5},
+				{kanji: "絶", meanings: ["прекращать"], readings: {on: ["дзэцу"], kun: ["та-цу"]}, level: 5},
+				{kanji: "綿", meanings: ["хлопок"], readings: {on: ["мэн"], kun: ["вата"]}, level: 5},
+				{kanji: "総", meanings: ["общий"], readings: {on: ["со:"], kun: ["субэ-тэ", "фуса"]}, level: 5},
+				{kanji: "編", meanings: ["вязать"], readings: {on: ["хэн"], kun: ["а-му"]}, level: 5},
+				{kanji: "績", meanings: ["достижения"], readings: {on: ["сэки"], kun: []}, level: 5},
+				{kanji: "織", meanings: ["ткать"], readings: {on: ["сёку", "сики"], kun: ["о-ру"]}, level: 5},
+				{kanji: "罪", meanings: ["преступление"], readings: {on: ["дзай"], kun: ["цуми"]}, level: 5},
+				{kanji: "群", meanings: ["группа"], readings: {on: ["гун"], kun: ["му-рэру"]}, level: 5},
+				{kanji: "義", meanings: ["честь"], readings: {on: ["ги"], kun: []}, level: 5},
+				{kanji: "耕", meanings: ["земледелие"], readings: {on: ["ко:"], kun: ["тагая-су"]}, level: 5},
+				{kanji: "職", meanings: ["должность"], readings: {on: ["сёку"], kun: []}, level: 5},
+				{kanji: "肥", meanings: ["удобрение"], readings: {on: ["хи"], kun: ["ко-ясу"]}, level: 5},
+				{kanji: "能", meanings: ["способность"], readings: {on: ["но:"], kun: ["ё-ку"]}, level: 5},
+				{kanji: "興", meanings: ["развлечение"], readings: {on: ["кё:"], kun: ["око-су"]}, level: 5},
+				{kanji: "舌", meanings: ["язык"], readings: {on: ["дзэцу"], kun: ["сита"]}, level: 5},
+				{kanji: "舎", meanings: ["здание"], readings: {on: ["ся"], kun: []}, level: 5},
+				{kanji: "術", meanings: ["умение"], readings: {on: ["дзюцу"], kun: ["субэ"]}, level: 5},
+				{kanji: "衛", meanings: ["охранять"], readings: {on: ["эй"], kun: []}, level: 5},
+				{kanji: "製", meanings: ["изготовлять"], readings: {on: ["сэй"], kun: []}, level: 5},
+				{kanji: "複", meanings: ["двойной"], readings: {on: ["фуку"], kun: []}, level: 5},
+				{kanji: "規", meanings: ["правило"], readings: {on: ["ки"], kun: ["буммаваси"]}, level: 5},
+				{kanji: "解", meanings: ["развязывать"], readings: {on: ["гэ", "кай"], kun: ["то-ку"]}, level: 5},
+				{kanji: "設", meanings: ["учреждать"], readings: {on: ["сэцу"], kun: ["мо:-кэру"]}, level: 5},
+				{kanji: "許", meanings: ["разрешать"], readings: {on: ["кё"], kun: ["юру-су"]}, level: 5},
+				{kanji: "証", meanings: ["свидетельство"], readings: {on: ["сё:"], kun: ["акаси"]}, level: 5},
+				{kanji: "評", meanings: ["суждение"], readings: {on: ["хё:"], kun: []}, level: 5},
+				{kanji: "講", meanings: ["лекция"], readings: {on: ["ко:"], kun: []}, level: 5},
+				{kanji: "謝", meanings: ["благодарить"], readings: {on: ["ся"], kun: ["аяма-ру"]}, level: 5},
+				{kanji: "識", meanings: ["сознание"], readings: {on: ["сики"], kun: []}, level: 5},
+				{kanji: "護", meanings: ["защищать"], readings: {on: ["го"], kun: ["мамо-ру"]}, level: 5},
+				{kanji: "豊", meanings: ["обильный"], readings: {on: ["хо:"], kun: ["юта-ка"]}, level: 5},
+				{kanji: "財", meanings: ["финансы"], readings: {on: ["дзай"], kun: []}, level: 5},
+				{kanji: "貧", meanings: ["бедный"], readings: {on: ["хин"], kun: ["мадзу-сий"]}, level: 5},
+				{kanji: "責", meanings: ["ответственность"], readings: {on: ["сэки"], kun: ["сэ-мэру"]}, level: 5},
+				{kanji: "貸", meanings: ["одалживать"], readings: {on: ["тай"], kun: ["ка-су"]}, level: 5},
+				{kanji: "貿", meanings: ["торговля"], readings: {on: ["бо:"], kun: []}, level: 5},
+				{kanji: "賀", meanings: ["поздравление"], readings: {on: ["га"], kun: []}, level: 5},
+				{kanji: "資", meanings: ["капитал"], readings: {on: ["си"], kun: []}, level: 5},
+				{kanji: "賛", meanings: ["одобрять"], readings: {on: ["сан"], kun: []}, level: 5},
+				{kanji: "質", meanings: ["качество"], readings: {on: ["сицу", "сити"], kun: []}, level: 5},
+				{kanji: "輸", meanings: ["ввоз-вывоз"], readings: {on: ["ю"], kun: []}, level: 5},
+				{kanji: "述", meanings: ["высказывать"], readings: {on: ["дзюцу"], kun: ["но-бэри"]}, level: 5},
+				{kanji: "迷", meanings: ["заблудиться"], readings: {on: ["мэй"], kun: ["маё-у"]}, level: 5},
+				{kanji: "退", meanings: ["отступать"], readings: {on: ["тай"], kun: ["сиридзо-ку"]}, level: 5},
+				{kanji: "逆", meanings: ["наоборот"], readings: {on: ["гяку"], kun: ["сака-рау"]}, level: 5},
+				{kanji: "造", meanings: ["изготовлять"], readings: {on: ["дзо:"], kun: ["цуку-ру"]}, level: 5},
+				{kanji: "過", meanings: ["превышать"], readings: {on: ["ка"], kun: ["су-гиру"]}, level: 5},
+				{kanji: "適", meanings: ["надлежащий"], readings: {on: ["тэки"], kun: ["кана-у"]}, level: 5},
+				{kanji: "酸", meanings: ["кислота"], readings: {on: ["сан"], kun: ["суй"]}, level: 5},
+				{kanji: "鉱", meanings: ["руда"], readings: {on: ["ко:"], kun: ["араганэ"]}, level: 5},
+				{kanji: "銅", meanings: ["медь"], readings: {on: ["до:"], kun: ["акаганэ"]}, level: 5},
+				{kanji: "銭", meanings: ["деньги"], readings: {on: ["сэн"], kun: ["дзэни"]}, level: 5},
+				{kanji: "防", meanings: ["предотвращать"], readings: {on: ["бо:"], kun: ["фусэ-гу"]}, level: 5},
+				{kanji: "限", meanings: ["предел"], readings: {on: ["гэн"], kun: ["каги-ру"]}, level: 5},
+				{kanji: "険", meanings: ["обрывистый"], readings: {on: ["кэн"], kun: ["кэва-сий"]}, level: 5},
+				{kanji: "際", meanings: ["рубеж"], readings: {on: ["сай"], kun: ["кива"]}, level: 5},
+				{kanji: "雑", meanings: ["всякого рода"], readings: {on: ["дзацу", "дзо:"], kun: ["ма-дзэру"]}, level: 5},
+				{kanji: "非", meanings: ["не"], readings: {on: ["хи"], kun: ["ара-дзу"]}, level: 5},
+				{kanji: "預", meanings: ["депозит"], readings: {on: ["ё"], kun: ["адзу-кэру"]}, level: 5},
+				{kanji: "領", meanings: ["территория"], readings: {on: ["рё:"], kun: []}, level: 5},
+				{kanji: "額", meanings: ["сумма"], readings: {on: ["гаку"], kun: ["хитай"]}, level: 5},
+				{kanji: "飼", meanings: ["выкармливать"], readings: {on: ["си"], kun: ["ка-у"]}, level: 5},
+
+				// kyoiku_6.txt
+				{kanji: "並", meanings: ["выстраивать"], readings: {on: ["хэй"], kun: ["нами", "нара-бу"]}, level: 6},
+				{kanji: "乱", meanings: ["беспорядок"], readings: {on: ["ран"], kun: ["мида-рэру"]}, level: 6},
+				{kanji: "乳", meanings: ["молоко"], readings: {on: ["ню:"], kun: ["тити"]}, level: 6},
+				{kanji: "亡", meanings: ["покойный"], readings: {on: ["бо:"], kun: ["на-кунару"]}, level: 6},
+				{kanji: "仁", meanings: ["человеколюбие"], readings: {on: ["дзин", "нин"], kun: []}, level: 6},
+				{kanji: "供", meanings: ["предоставлять"], readings: {on: ["кё:", "ку"], kun: ["томо", "сона-эру"]}, level: 6},
+				{kanji: "俳", meanings: ["хайку"], readings: {on: ["хай"], kun: []}, level: 6},
+				{kanji: "値", meanings: ["величина"], readings: {on: ["ти"], kun: ["атаи"]}, level: 6},
+				{kanji: "傷", meanings: ["рана"], readings: {on: ["сё:"], kun: ["кидзу"]}, level: 6},
+				{kanji: "優", meanings: ["превосходный"], readings: {on: ["ю:"], kun: ["яса-сий"]}, level: 6},
+				{kanji: "党", meanings: ["партия"], readings: {on: ["то:"], kun: []}, level: 6},
+				{kanji: "冊", meanings: ["том"], readings: {on: ["сацу", "саку"], kun: []}, level: 6},
+				{kanji: "処", meanings: ["распоряжаться"], readings: {on: ["сё"], kun: []}, level: 6},
+				{kanji: "刻", meanings: ["гравировать"], readings: {on: ["коку"], kun: ["кидза-му"]}, level: 6},
+				{kanji: "割", meanings: ["разделять"], readings: {on: ["кацу"], kun: ["ва-ру"]}, level: 6},
+				{kanji: "創", meanings: ["творческий"], readings: {on: ["со:"], kun: ["цуку-ру"]}, level: 6},
+				{kanji: "劇", meanings: ["драма"], readings: {on: ["гэки"], kun: []}, level: 6},
+				{kanji: "勤", meanings: ["служба"], readings: {on: ["кин", "гон"], kun: ["цуто-мэру"]}, level: 6},
+				{kanji: "危", meanings: ["опасный"], readings: {on: ["ки"], kun: ["ая-уй", "абу-най"]}, level: 6},
+				{kanji: "卵", meanings: ["яйцо"], readings: {on: ["ран"], kun: ["тамаго"]}, level: 6},
+				{kanji: "厳", meanings: ["строгий"], readings: {on: ["гэн"], kun: ["киби-сий"]}, level: 6},
+				{kanji: "収", meanings: ["доход"], readings: {on: ["сю:"], kun: ["оса-мэру"]}, level: 6},
+				{kanji: "后", meanings: ["императрица"], readings: {on: ["ко:", "го:"], kun: ["кисаки"]}, level: 6},
+				{kanji: "否", meanings: ["или нет"], readings: {on: ["хи"], kun: ["ина", "ия"]}, level: 6},
+				{kanji: "吸", meanings: ["сосать"], readings: {on: ["кю:"], kun: ["су-у"]}, level: 6},
+				{kanji: "呼", meanings: ["звать"], readings: {on: ["ко"], kun: ["ё-бу"]}, level: 6},
+				{kanji: "善", meanings: ["добро"], readings: {on: ["дзэн"], kun: ["ё-й"]}, level: 6},
+				{kanji: "困", meanings: ["трудности"], readings: {on: ["кон"], kun: ["кома-ру"]}, level: 6},
+				{kanji: "垂", meanings: ["висеть"], readings: {on: ["суй"], kun: ["та-тэру"]}, level: 6},
+				{kanji: "城", meanings: ["замок"], readings: {on: ["дзё:"], kun: ["сиро"]}, level: 6},
+				{kanji: "域", meanings: ["район"], readings: {on: ["ики"], kun: []}, level: 6},
+				{kanji: "奏", meanings: ["музицировать"], readings: {on: ["со:"], kun: ["кана-дэру"]}, level: 6},
+				{kanji: "奮", meanings: ["воодушевление"], readings: {on: ["фун"], kun: ["фуру-у"]}, level: 6},
+				{kanji: "姿", meanings: ["фигура"], readings: {on: ["си"], kun: ["сугата"]}, level: 6},
+				{kanji: "存", meanings: ["существовать"], readings: {on: ["сон", "дзон"], kun: []}, level: 6},
+				{kanji: "孝", meanings: ["сыновний долг"], readings: {on: ["ко:"], kun: []}, level: 6},
+				{kanji: "宅", meanings: ["дом"], readings: {on: ["таку"], kun: []}, level: 6},
+				{kanji: "宇", meanings: ["вселенная"], readings: {on: ["у"], kun: []}, level: 6},
+				{kanji: "宗", meanings: ["религия"], readings: {on: ["сю:", "со"], kun: ["мунэ"]}, level: 6},
+				{kanji: "宙", meanings: ["космос"], readings: {on: ["тю:"], kun: []}, level: 6},
+				{kanji: "宝", meanings: ["сокровище"], readings: {on: ["хо:"], kun: ["такара"]}, level: 6},
+				{kanji: "宣", meanings: ["оглашать"], readings: {on: ["сэн"], kun: ["нотама-у"]}, level: 6},
+				{kanji: "密", meanings: ["тайна"], readings: {on: ["мицу"], kun: ["хисока"]}, level: 6},
+				{kanji: "寸", meanings: ["дюйм"], readings: {on: ["сун"], kun: []}, level: 6},
+				{kanji: "専", meanings: ["специальный"], readings: {on: ["сэн"], kun: ["моппа-ра"]}, level: 6},
+				{kanji: "射", meanings: ["стрелять"], readings: {on: ["ся"], kun: ["и-ру"]}, level: 6},
+				{kanji: "将", meanings: ["генерал"], readings: {on: ["сё:"], kun: ["маса-ни", "хата"]}, level: 6},
+				{kanji: "尊", meanings: ["почитать"], readings: {on: ["сон"], kun: ["то:то-бу"]}, level: 6},
+				{kanji: "就", meanings: ["приступать"], readings: {on: ["сю:"], kun: ["цу-ку"]}, level: 6},
+				{kanji: "尺", meanings: ["мера длины"], readings: {on: ["сяку"], kun: []}, level: 6},
+				{kanji: "届", meanings: ["извещение"], readings: {on: ["кай"], kun: ["тодо-ку"]}, level: 6},
+				{kanji: "展", meanings: ["выставка"], readings: {on: ["тэн"], kun: []}, level: 6},
+				{kanji: "層", meanings: ["слой"], readings: {on: ["со:"], kun: []}, level: 6},
+				{kanji: "己", meanings: ["сам"], readings: {on: ["ко", "ки"], kun: ["онорэ", "цутиното"]}, level: 6},
+				{kanji: "巻", meanings: ["свиток"], readings: {on: ["кан", "кэн"], kun: ["маки", "ма-ку"]}, level: 6},
+				{kanji: "幕", meanings: ["занавес"], readings: {on: ["маку", "баку"], kun: []}, level: 6},
+				{kanji: "干", meanings: ["сухой"], readings: {on: ["кан"], kun: ["хо-су"]}, level: 6},
+				{kanji: "幼", meanings: ["младенец"], readings: {on: ["ё:"], kun: ["осана-й"]}, level: 6},
+				{kanji: "庁", meanings: ["администрация"], readings: {on: ["тё:"], kun: []}, level: 6},
+				{kanji: "座", meanings: ["сидение"], readings: {on: ["дза"], kun: ["сува-ру"]}, level: 6},
+				{kanji: "延", meanings: ["растягивать"], readings: {on: ["эн"], kun: ["но-басу"]}, level: 6},
+				{kanji: "律", meanings: ["ритм"], readings: {on: ["рицу"], kun: []}, level: 6},
+				{kanji: "従", meanings: ["следовать"], readings: {on: ["дзю:"], kun: ["ситага-у"]}, level: 6},
+				{kanji: "忘", meanings: ["забывать"], readings: {on: ["бо:"], kun: ["васу-рэру"]}, level: 6},
+				{kanji: "忠", meanings: ["преданность"], readings: {on: ["тю:"], kun: []}, level: 6},
+				{kanji: "憲", meanings: ["конституция"], readings: {on: ["кэн"], kun: []}, level: 6},
+				{kanji: "我", meanings: ["эго"], readings: {on: ["га"], kun: ["варэ"]}, level: 6},
+				{kanji: "批", meanings: ["критика"], readings: {on: ["хи"], kun: []}, level: 6},
+				{kanji: "担", meanings: ["нести"], readings: {on: ["тан"], kun: ["нина-у", "кацу-гу"]}, level: 6},
+				{kanji: "拝", meanings: ["поклоняться"], readings: {on: ["хай"], kun: ["ога-му"]}, level: 6},
+				{kanji: "拡", meanings: ["расширять"], readings: {on: ["каку"], kun: ["хиро-гэру"]}, level: 6},
+				{kanji: "捨", meanings: ["выбрасывать"], readings: {on: ["ся"], kun: ["су-тэру"]}, level: 6},
+				{kanji: "探", meanings: ["искать"], readings: {on: ["тан"], kun: ["сага-су"]}, level: 6},
+				{kanji: "推", meanings: ["предполагать"], readings: {on: ["суй"], kun: []}, level: 6},
+				{kanji: "揮", meanings: ["размахивать"], readings: {on: ["ки"], kun: []}, level: 6},
+				{kanji: "操", meanings: ["манипулировать"], readings: {on: ["со:"], kun: ["аяцу-ру", "мисао"]}, level: 6},
+				{kanji: "敬", meanings: ["уважать"], readings: {on: ["кэй"], kun: ["уяма-у"]}, level: 6},
+				{kanji: "映", meanings: ["отражаться"], readings: {on: ["эй"], kun: ["уцу-ру"]}, level: 6},
+				{kanji: "晩", meanings: ["вечер"], readings: {on: ["бан"], kun: ["осо-й"]}, level: 6},
+				{kanji: "暖", meanings: ["тёплый"], readings: {on: ["дан"], kun: ["атата-кай"]}, level: 6},
+				{kanji: "暮", meanings: ["сумерки"], readings: {on: ["бо"], kun: ["ку-расу"]}, level: 6},
+				{kanji: "朗", meanings: ["звучный"], readings: {on: ["ро:"], kun: ["хога-рака"]}, level: 6},
+				{kanji: "机", meanings: ["стол"], readings: {on: ["ки"], kun: ["цукуэ"]}, level: 6},
+				{kanji: "枚", meanings: ["плоские предметы"], readings: {on: ["май"], kun: []}, level: 6},
+				{kanji: "染", meanings: ["окрашивать"], readings: {on: ["сэн"], kun: ["со-мэру"]}, level: 6},
+				{kanji: "株", meanings: ["акция"], readings: {on: ["сю"], kun: ["кабу"]}, level: 6},
+				{kanji: "棒", meanings: ["палка"], readings: {on: ["бо:"], kun: []}, level: 6},
+				{kanji: "模", meanings: ["образец"], readings: {on: ["мо", "бо"], kun: []}, level: 6},
+				{kanji: "権", meanings: ["права"], readings: {on: ["кэн", "гон"], kun: []}, level: 6},
+				{kanji: "樹", meanings: ["деревья"], readings: {on: ["дзю"], kun: ["ки"]}, level: 6},
+				{kanji: "欲", meanings: ["желать"], readings: {on: ["ёку"], kun: ["хо-сий"]}, level: 6},
+				{kanji: "段", meanings: ["ступень"], readings: {on: ["дан"], kun: []}, level: 6},
+				{kanji: "沿", meanings: ["вдоль"], readings: {on: ["эн"], kun: ["со-у"]}, level: 6},
+				{kanji: "泉", meanings: ["родник"], readings: {on: ["сэн"], kun: ["идзуми"]}, level: 6},
+				{kanji: "洗", meanings: ["мыть"], readings: {on: ["сэн"], kun: ["ара-у"]}, level: 6},
+				{kanji: "派", meanings: ["группировка"], readings: {on: ["ха"], kun: []}, level: 6},
+				{kanji: "済", meanings: ["закончено"], readings: {on: ["сай"], kun: ["су-му"]}, level: 6},
+				{kanji: "源", meanings: ["исток"], readings: {on: ["гэн"], kun: ["минамото"]}, level: 6},
+				{kanji: "潮", meanings: ["прилив"], readings: {on: ["тё:"], kun: ["сио"]}, level: 6},
+				{kanji: "激", meanings: ["яростный"], readings: {on: ["гэки"], kun: ["хагэ-сий"]}, level: 6},
+				{kanji: "灰", meanings: ["пепел"], readings: {on: ["кай"], kun: ["хай"]}, level: 6},
+				{kanji: "熟", meanings: ["спелый"], readings: {on: ["дзюку"], kun: []}, level: 6},
+				{kanji: "片", meanings: ["один из двух"], readings: {on: ["хэн"], kun: ["ката"]}, level: 6},
+				{kanji: "班", meanings: ["бригада"], readings: {on: ["хан"], kun: []}, level: 6},
+				{kanji: "異", meanings: ["отличаться"], readings: {on: ["и"], kun: ["кото-нару"]}, level: 6},
+				{kanji: "疑", meanings: ["подозрение"], readings: {on: ["ги"], kun: ["утага-у"]}, level: 6},
+				{kanji: "痛", meanings: ["боль"], readings: {on: ["цу:"], kun: ["ита-й"]}, level: 6},
+				{kanji: "皇", meanings: ["император"], readings: {on: ["ко:"], kun: ["о:"]}, level: 6},
+				{kanji: "盛", meanings: ["процветать"], readings: {on: ["сэй"], kun: ["сака-н", "мори"]}, level: 6},
+				{kanji: "盟", meanings: ["союз"], readings: {on: ["мэй"], kun: []}, level: 6},
+				{kanji: "看", meanings: ["присматривать"], readings: {on: ["кан"], kun: ["ми-ру"]}, level: 6},
+				{kanji: "砂", meanings: ["песок"], readings: {on: ["са"], kun: ["суна"]}, level: 6},
+				{kanji: "磁", meanings: ["магнит"], readings: {on: ["дзи"], kun: []}, level: 6},
+				{kanji: "私", meanings: ["я"], readings: {on: ["си"], kun: ["ватаси", "ватакуси"]}, level: 6},
+				{kanji: "秘", meanings: ["тайна"], readings: {on: ["хи"], kun: ["хи-мэру"]}, level: 6},
+				{kanji: "穀", meanings: ["зерно"], readings: {on: ["коку"], kun: []}, level: 6},
+				{kanji: "穴", meanings: ["дыра"], readings: {on: ["кэцу"], kun: ["ана"]}, level: 6},
+				{kanji: "窓", meanings: ["окно"], readings: {on: ["со:"], kun: ["мадо"]}, level: 6},
+				{kanji: "筋", meanings: ["мышца"], readings: {on: ["кин"], kun: ["судзи"]}, level: 6},
+				{kanji: "策", meanings: ["схема"], readings: {on: ["саку"], kun: []}, level: 6},
+				{kanji: "簡", meanings: ["простой"], readings: {on: ["кан"], kun: []}, level: 6},
+				{kanji: "糖", meanings: ["сахар"], readings: {on: ["то:"], kun: []}, level: 6},
+				{kanji: "系", meanings: ["система"], readings: {on: ["кэй"], kun: []}, level: 6},
+				{kanji: "紅", meanings: ["алый"], readings: {on: ["ко:"], kun: ["бэни", "курэнай"]}, level: 6},
+				{kanji: "納", meanings: ["уплата"], readings: {on: ["но:"], kun: ["оса-мэру"]}, level: 6},
+				{kanji: "純", meanings: ["беспримесный"], readings: {on: ["дзюн"], kun: []}, level: 6},
+				{kanji: "絹", meanings: ["шёлк"], readings: {on: ["кэн"], kun: ["кину"]}, level: 6},
+				{kanji: "縦", meanings: ["вертикальный"], readings: {on: ["дзю:"], kun: ["татэ", "ё-си", "хосиимама"]}, level: 6},
+				{kanji: "縮", meanings: ["сжиматься"], readings: {on: ["сюку"], kun: ["тидзи-мэру"]}, level: 6},
+				{kanji: "署", meanings: ["контора"], readings: {on: ["сё"], kun: []}, level: 6},
+				{kanji: "翌", meanings: ["следующий день"], readings: {on: ["ёку"], kun: []}, level: 6},
+				{kanji: "聖", meanings: ["святой"], readings: {on: ["сэй"], kun: ["хадзири"]}, level: 6},
+				{kanji: "肺", meanings: ["лёгкие"], readings: {on: ["хай"], kun: []}, level: 6},
+				{kanji: "背", meanings: ["спина"], readings: {on: ["хай"], kun: ["сэ", "сэй", "сомо-ку"]}, level: 6},
+				{kanji: "胸", meanings: ["грудь"], readings: {on: ["кё:"], kun: ["мунэ"]}, level: 6},
+				{kanji: "脳", meanings: ["мозг"], readings: {on: ["но:"], kun: []}, level: 6},
+				{kanji: "腹", meanings: ["живот"], readings: {on: ["фуку"], kun: ["хара"]}, level: 6},
+				{kanji: "臓", meanings: ["внутренности"], readings: {on: ["дзо:"], kun: []}, level: 6},
+				{kanji: "臨", meanings: ["присутствовать"], readings: {on: ["рин"], kun: ["нодзо-му"]}, level: 6},
+				{kanji: "至", meanings: ["наиболее"], readings: {on: ["си"], kun: ["ита-ру"]}, level: 6},
+				{kanji: "若", meanings: ["молодой"], readings: {on: ["дзяку"], kun: ["вака-й", "мо-си"]}, level: 6},
+				{kanji: "著", meanings: ["автор"], readings: {on: ["тё", "тяку"], kun: ["арава-су", "итидзиру-сий"]}, level: 6},
+				{kanji: "蒸", meanings: ["варить на пару"], readings: {on: ["дзё:"], kun: ["му-су"]}, level: 6},
+				{kanji: "蔵", meanings: ["кладовая"], readings: {on: ["дзо:"], kun: ["кура"]}, level: 6},
+				{kanji: "蚕", meanings: ["шелковичный червь"], readings: {on: ["сан"], kun: ["кайко"]}, level: 6},
+				{kanji: "衆", meanings: ["народ"], readings: {on: ["сю:"], kun: []}, level: 6},
+				{kanji: "裁", meanings: ["судить"], readings: {on: ["сай"], kun: ["саба-ку"]}, level: 6},
+				{kanji: "装", meanings: ["наряжаться"], readings: {on: ["со:", "сё:"], kun: ["ёсо:-у"]}, level: 6},
+				{kanji: "裏", meanings: ["изнанка"], readings: {on: ["ри"], kun: ["ура"]}, level: 6},
+				{kanji: "補", meanings: ["восполнять"], readings: {on: ["хо"], kun: ["огина-у"]}, level: 6},
+				{kanji: "視", meanings: ["зрение"], readings: {on: ["си"], kun: ["ми-ру"]}, level: 6},
+				{kanji: "覧", meanings: ["осматривать"], readings: {on: ["ран"], kun: []}, level: 6},
+				{kanji: "討", meanings: ["подавлять"], readings: {on: ["то:"], kun: ["у-цу"]}, level: 6},
+				{kanji: "訪", meanings: ["посещать"], readings: {on: ["хо:"], kun: ["отодзу-рэру"]}, level: 6},
+				{kanji: "訳", meanings: ["перевод"], readings: {on: ["яку"], kun: ["вакэ"]}, level: 6},
+				{kanji: "詞", meanings: ["слово"], readings: {on: ["си"], kun: ["котоба"]}, level: 6},
+				{kanji: "誌", meanings: ["журнал"], readings: {on: ["си"], kun: []}, level: 6},
+				{kanji: "認", meanings: ["признавать"], readings: {on: ["нин"], kun: ["мито-мэру"]}, level: 6},
+				{kanji: "誕", meanings: ["рождаться"], readings: {on: ["тан"], kun: []}, level: 6},
+				{kanji: "誠", meanings: ["искренность"], readings: {on: ["сэй"], kun: ["макото"]}, level: 6},
+				{kanji: "誤", meanings: ["ошибка"], readings: {on: ["го"], kun: ["аяма-ру"]}, level: 6},
+				{kanji: "論", meanings: ["теория"], readings: {on: ["рон"], kun: []}, level: 6},
+				{kanji: "諸", meanings: ["всевозможные"], readings: {on: ["сё"], kun: ["моро"]}, level: 6},
+				{kanji: "警", meanings: ["полиция"], readings: {on: ["кэй"], kun: ["имаси-мэру"]}, level: 6},
+				{kanji: "貴", meanings: ["благородный"], readings: {on: ["ки"], kun: ["татто-й"]}, level: 6},
+				{kanji: "賃", meanings: ["плата"], readings: {on: ["тин"], kun: []}, level: 6},
+				{kanji: "遺", meanings: ["оставлять после себя"], readings: {on: ["и"], kun: ["ноко-су"]}, level: 6},
+				{kanji: "郵", meanings: ["почта"], readings: {on: ["ю:"], kun: []}, level: 6},
+				{kanji: "郷", meanings: ["родина"], readings: {on: ["кё:", "го:"], kun: ["сато"]}, level: 6},
+				{kanji: "針", meanings: ["игла"], readings: {on: ["син"], kun: ["хари"]}, level: 6},
+				{kanji: "鋼", meanings: ["сталь"], readings: {on: ["ко:"], kun: ["хаганэ"]}, level: 6},
+				{kanji: "閉", meanings: ["закрывать"], readings: {on: ["хэй"], kun: ["си-мэру"]}, level: 6},
+				{kanji: "閣", meanings: ["высокое здание"], readings: {on: ["каку"], kun: []}, level: 6},
+				{kanji: "降", meanings: ["спускаться"], readings: {on: ["ко:"], kun: ["о-риру"]}, level: 6},
+				{kanji: "陛", meanings: ["Его Величество"], readings: {on: ["хэй"], kun: []}, level: 6},
+				{kanji: "除", meanings: ["устранять"], readings: {on: ["дзё"], kun: ["нодзо-ку"]}, level: 6},
+				{kanji: "障", meanings: ["препятствие"], readings: {on: ["сё:"], kun: ["сава-ру"]}, level: 6},
+				{kanji: "難", meanings: ["трудный"], readings: {on: ["нан"], kun: ["мудзука-сий"]}, level: 6},
+				{kanji: "革", meanings: ["кожа"], readings: {on: ["каку"], kun: ["кава"]}, level: 6},
+				{kanji: "頂", meanings: ["вершина"], readings: {on: ["тё:"], kun: ["итада-ку"]}, level: 6},
+				{kanji: "骨", meanings: ["кость"], readings: {on: ["коцу"], kun: ["хонэ"]}, level: 6}
+			];
+            
+            kanjiDictionary = kanjiData;
+        }
+        
+        // Генерация фуриганы для кандзи
+        function generateFuriganaForKanji() {
+            kanjiDictionary.forEach(kanji => {
+                if (kanji.readings.on && kanji.readings.on.length > 0) {
+                    kanji.furigana = kanji.readings.on[0];
+                } else if (kanji.readings.kun && kanji.readings.kun.length > 0) {
+                    kanji.furigana = kanji.readings.kun[0];
+                } else {
+                    kanji.furigana = "";
+                }
+                
+                kanji.kiriji = generateKiriji(kanji.furigana);
+            });
+        }
+        
+        // Транскрипция японского чтения в кириллицу
+        function generateKiriji(japaneseReading) {
+            if (!japaneseReading) return "";
+            
+            const romajiToKiriji = {
+                'a': 'а', 'i': 'и', 'u': 'у', 'e': 'э', 'o': 'о',
+                'ka': 'ка', 'ki': 'ки', 'ku': 'ку', 'ke': 'кэ', 'ko': 'ко',
+                'sa': 'са', 'shi': 'си', 'su': 'су', 'se': 'сэ', 'so': 'со',
+                'ta': 'та', 'chi': 'ти', 'tsu': 'цу', 'te': 'тэ', 'to': 'то',
+                'na': 'на', 'ni': 'ни', 'nu': 'ну', 'ne': 'нэ', 'no': 'но',
+                'ha': 'ха', 'hi': 'хи', 'fu': 'фу', 'he': 'хэ', 'ho': 'хо',
+                'ma': 'ма', 'mi': 'ми', 'mu': 'му', 'me': 'мэ', 'mo': 'мо',
+                'ya': 'я', 'yu': 'ю', 'yo': 'ё',
+                'ra': 'ра', 'ri': 'ри', 'ru': 'ру', 're': 'рэ', 'ro': 'ро',
+                'wa': 'ва', 'wo': 'о', 'n': 'н',
+                'ga': 'га', 'gi': 'ги', 'gu': 'гу', 'ge': 'гэ', 'go': 'го',
+                'za': 'дза', 'ji': 'дзи', 'zu': 'дзу', 'ze': 'дзэ', 'zo': 'дзо',
+                'da': 'да', 'di': 'ди', 'du': 'ду', 'de': 'дэ', 'do': 'до',
+                'ba': 'ба', 'bi': 'би', 'bu': 'бу', 'be': 'бэ', 'bo': 'бо',
+                'pa': 'па', 'pi': 'пи', 'pu': 'пу', 'pe': 'пэ', 'po': 'по',
+                'kya': 'кя', 'kyu': 'кю', 'kyo': 'кё',
+                'sha': 'ся', 'shu': 'сю', 'sho': 'сё',
+                'cha': 'тя', 'chu': 'тю', 'cho': 'тё',
+                'nya': 'ня', 'nyu': 'ню', 'nyo': 'нё',
+                'hya': 'хя', 'hyu': 'хю', 'hyo': 'хё',
+                'mya': 'мя', 'myu': 'мю', 'myo': 'мё',
+                'rya': 'ря', 'ryu': 'рю', 'ryo': 'рё',
+                'gya': 'гя', 'gyu': 'гю', 'gyo': 'гё',
+                'ja': 'дзя', 'ju': 'дзю', 'jo': 'дзё',
+                'bya': 'бя', 'byu': 'бю', 'byo': 'бё',
+                'pya': 'пя', 'pyu': 'пю', 'pyo': 'пё'
+            };
+            
+            let kiriji = japaneseReading.toLowerCase();
+            kiriji = kiriji.replace(/[ō:]/g, 'о:').replace(/[ū:]/g, 'у:');
+            
+            for (const [romaji, kirijiChar] of Object.entries(romajiToKiriji)) {
+                const regex = new RegExp(romaji, 'g');
+                kiriji = kiriji.replace(regex, kirijiChar);
+            }
+            
+            return kiriji;
+        }
+        
+        // Создание таблицы каны для вкладки настроек
+        function createKanaTable() {
+            const kanaTable = document.getElementById('kana-table');
+            kanaTable.innerHTML = '';
+            
+            // Классическая последовательность групп каны
+            const kanaGroups = [
+                {title: "Гласные", kana: ['あ', 'い', 'う', 'え', 'お'], romaji: ['а', 'и', 'у', 'э', 'о']},
+                {title: "K-группа", kana: ['か', 'き', 'く', 'け', 'こ'], romaji: ['ка', 'ки', 'ку', 'кэ', 'ко']},
+                {title: "S-группа", kana: ['さ', 'し', 'す', 'せ', 'そ'], romaji: ['са', 'си', 'су', 'сэ', 'со']},
+                {title: "T-группа", kana: ['た', 'ち', 'つ', 'て', 'と'], romaji: ['та', 'ти', 'цу', 'тэ', 'то']},
+                {title: "N-группа", kana: ['な', 'に', 'ぬ', 'ね', 'の'], romaji: ['на', 'ни', 'ну', 'нэ', 'но']},
+                {title: "H-группа", kana: ['は', 'ひ', 'ふ', 'へ', 'ほ'], romaji: ['ха', 'хи', 'фу', 'хэ', 'хо']},
+                {title: "M-группа", kana: ['ま', 'み', 'む', 'め', 'も'], romaji: ['ма', 'ми', 'му', 'мэ', 'мо']},
+                {title: "Y-группа", kana: ['や', '', 'ゆ', '', 'よ'], romaji: ['я', '', 'ю', '', 'ё']},
+                {title: "R-группа", kana: ['ら', 'り', 'る', 'れ', 'ろ'], romaji: ['ра', 'ри', 'ру', 'рэ', 'ро']},
+                {title: "W/N", kana: ['わ', '', '', '', 'を'], romaji: ['ва', '', '', '', 'о']},
+                {title: "Н", kana: ['ん', '', '', '', ''], romaji: ['н', '', '', '', '']},
+                {title: "G-группа", kana: ['が', 'ぎ', 'ぐ', 'げ', 'ご'], romaji: ['га', 'ги', 'гу', 'гэ', 'го']},
+                {title: "Z-группа", kana: ['ざ', 'じ', 'ず', 'ぜ', 'ぞ'], romaji: ['дза', 'дзи', 'дзу', 'дзэ', 'дзо']},
+                {title: "D-группа", kana: ['だ', 'ぢ', 'づ', 'で', 'ど'], romaji: ['да', 'ди', 'ду', 'дэ', 'до']},
+                {title: "B-группа", kana: ['ば', 'び', 'ぶ', 'べ', 'ぼ'], romaji: ['ба', 'би', 'бу', 'бэ', 'бо']},
+                {title: "P-группа", kana: ['ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ'], romaji: ['па', 'пи', 'пу', 'пэ', 'по']}
+            ];
+            
+            // Создаем таблицу
+            kanaGroups.forEach(group => {
+                for (let i = 0; i < group.kana.length; i++) {
+                    if (group.kana[i] && group.romaji[i]) {
+                        const kanaItem = document.createElement('div');
+                        kanaItem.className = 'kana-item';
+                        kanaItem.dataset.romaji = group.romaji[i];
+                        kanaItem.dataset.hiragana = group.kana[i];
+                        kanaItem.dataset.katakana = katakanaTable[group.kana[i]] || group.kana[i];
+                        
+                        kanaItem.innerHTML = `
+                            <div class="kana-char">${group.kana[i]}</div>
+                            <div class="kana-romaji">${group.romaji[i]}</div>
+                        `;
+                        
+                        kanaItem.addEventListener('click', function() {
+                            this.classList.toggle('selected');
+                            const romaji = this.dataset.romaji;
+                            
+                            if (this.classList.contains('selected')) {
+                                selectedKana.add(romaji);
+                            } else {
+                                selectedKana.delete(romaji);
+                            }
+                        });
+                        
+                        kanaTable.appendChild(kanaItem);
+                    }
+                }
+            });
+        }
+        
+        // Создание классической таблицы каны для отдельной вкладки
+        function renderKanaTable(kanaType = 'hiragana') {
+            const container = document.getElementById('kana-table-content');
+            container.innerHTML = '';
+            
+            // Классическая последовательность групп каны с полными названиями
+            const kanaGroups = [
+                {title: "Гласные (あ行)", kana: ['あ', 'い', 'う', 'え', 'お'], romaji: ['а', 'и', 'у', 'э', 'о']},
+                {title: "K-группа (か行)", kana: ['か', 'き', 'く', 'け', 'こ'], romaji: ['ка', 'ки', 'ку', 'кэ', 'ко']},
+                {title: "S-группа (さ行)", kana: ['さ', 'し', 'す', 'せ', 'そ'], romaji: ['са', 'си', 'су', 'сэ', 'со']},
+                {title: "T-группа (た行)", kana: ['た', 'ち', 'つ', 'て', 'と'], romaji: ['та', 'ти', 'цу', 'тэ', 'то']},
+                {title: "N-группа (な行)", kana: ['な', 'に', 'ぬ', 'ね', 'の'], romaji: ['на', 'ни', 'ну', 'нэ', 'но']},
+                {title: "H-группа (は行)", kana: ['は', 'ひ', 'ふ', 'へ', 'ほ'], romaji: ['ха', 'хи', 'фу', 'хэ', 'хо']},
+                {title: "M-группа (ま行)", kana: ['ま', 'み', 'む', 'め', 'も'], romaji: ['ма', 'ми', 'му', 'мэ', 'мо']},
+                {title: "Y-группа (や行)", kana: ['や', '', 'ゆ', '', 'よ'], romaji: ['я', '', 'ю', '', 'ё']},
+                {title: "R-группа (ら行)", kana: ['ら', 'り', 'る', 'れ', 'ろ'], romaji: ['ра', 'ри', 'ру', 'рэ', 'ро']},
+                {title: "W-группа (わ行)", kana: ['わ', '', '', '', 'を'], romaji: ['ва', '', '', '', 'о']},
+                {title: "Н (ん)", kana: ['ん', '', '', '', ''], romaji: ['н', '', '', '', '']},
+                {title: "G-группа (が行)", kana: ['が', 'ぎ', 'ぐ', 'げ', 'ご'], romaji: ['га', 'ги', 'гу', 'гэ', 'го']},
+                {title: "Z-группа (ざ行)", kana: ['ざ', 'じ', 'ず', 'ぜ', 'ぞ'], romaji: ['дза', 'дзи', 'дзу', 'дзэ', 'дзо']},
+                {title: "D-группа (だ行)", kana: ['だ', 'ぢ', 'づ', 'で', 'ど'], romaji: ['да', 'ди', 'ду', 'дэ', 'до']},
+                {title: "B-группа (ば行)", kana: ['ば', 'び', 'ぶ', 'べ', 'ぼ'], romaji: ['ба', 'би', 'бу', 'бэ', 'бо']},
+                {title: "P-группа (ぱ行)", kana: ['ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ'], romaji: ['па', 'пи', 'пу', 'пэ', 'по']},
+                {title: "Сложные слоги (きゃ行)", kana: ['きゃ', 'きゅ', 'きょ', '', ''], romaji: ['кя', 'кю', 'кё', '', '']},
+                {title: "Сложные слоги (しゃ行)", kana: ['しゃ', 'しゅ', 'しょ', '', ''], romaji: ['ся', 'сю', 'сё', '', '']},
+                {title: "Сложные слоги (ちゃ行)", kana: ['ちゃ', 'ちゅ', 'ちょ', '', ''], romaji: ['тя', 'тю', 'тё', '', '']},
+                {title: "Сложные слоги (にゃ行)", kana: ['にゃ', 'にゅ', 'にょ', '', ''], romaji: ['ня', 'ню', 'нё', '', '']},
+                {title: "Сложные слоги (ひゃ行)", kana: ['ひゃ', 'ひゅ', 'ひょ', '', ''], romaji: ['хя', 'хю', 'хё', '', '']},
+                {title: "Сложные слоги (みゃ行)", kana: ['みゃ', 'みゅ', 'みょ', '', ''], romaji: ['мя', 'мю', 'мё', '', '']},
+                {title: "Сложные слоги (りゃ行)", kana: ['りゃ', 'りゅ', 'りょ', '', ''], romaji: ['ря', 'рю', 'рё', '', '']},
+                {title: "Сложные слоги (ぎゃ行)", kana: ['ぎゃ', 'ぎゅ', 'ぎょ', '', ''], romaji: ['гя', 'гю', 'гё', '', '']},
+                {title: "Сложные слоги (じゃ行)", kana: ['じゃ', 'じゅ', 'じょ', '', ''], romaji: ['дзя', 'дзю', 'дзё', '', '']},
+                {title: "Сложные слоги (びゃ行)", kana: ['びゃ', 'びゅ', 'びょ', '', ''], romaji: ['бя', 'бю', 'бё', '', '']},
+                {title: "Сложные слоги (ぴゃ行)", kana: ['ぴゃ', 'ぴゅ', 'ぴょ', '', ''], romaji: ['пя', 'пю', 'пё', '', '']}
+            ];
+            
+            // Создаем группы
+            kanaGroups.forEach(group => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'kana-group';
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'kana-group-title';
+                titleDiv.textContent = group.title;
+                groupDiv.appendChild(titleDiv);
+                
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'kana-group-grid';
+                
+                for (let i = 0; i < group.kana.length; i++) {
+                    if (group.kana[i] && group.romaji[i]) {
+                        const kanaCell = document.createElement('div');
+                        kanaCell.className = `kana-cell ${kanaType === 'katakana' ? 'katakana' : ''}`;
+                        
+                        let kanaChar = group.kana[i];
+                        if (kanaType === 'katakana') {
+                            kanaChar = katakanaTable[group.kana[i]] || group.kana[i];
+                        }
+                        
+                        kanaCell.innerHTML = `
+                            <div class="kana-char-large">${kanaChar}</div>
+                            <div class="kana-romaji-large">${group.romaji[i]}</div>
+                         `;
+                        
+                        gridDiv.appendChild(kanaCell);
+                    }
+                }
+                
+                groupDiv.appendChild(gridDiv);
+                container.appendChild(groupDiv);
+            });
+        }
+        
+        // Функция для разбиения текста на слова
+        function splitTextIntoWords(text) {
+            const wordRegex = /[a-zA-Zа-яА-ЯёЁ]+/g;
+            const words = [];
+            let lastIndex = 0;
+            
+            let match;
+            while ((match = wordRegex.exec(text)) !== null) {
+                if (match.index > lastIndex) {
+                    words.push({
+                        type: 'non-word',
+                        content: text.substring(lastIndex, match.index)
+                    });
+                }
+                
+                words.push({
+                    type: 'word',
+                    content: match[0]
+                });
+                
+                lastIndex = match.index + match[0].length;
+            }
+            
+            if (lastIndex < text.length) {
+                words.push({
+                    type: 'non-word',
+                    content: text.substring(lastIndex)
+                });
+            }
+            
+            return words;
+        }
+
+        // Функция обработки слова
+        function processWord(word, kanaType) {
+            let result = '';
+            let i = 0;
+            const replacements = new Map();
+            
+            while (i < word.length) {
+                let replaced = false;
+                
+                for (let len = 3; len >= 2; len--) {
+                    if (i + len <= word.length) {
+                        const syllable = word.substring(i, i + len).toLowerCase();
+                        if (polyvanovTable[syllable] && selectedKana.has(syllable)) {
+                            if (replacements.has(syllable)) {
+                                result += replacements.get(syllable);
+                            } else {
+                                let kana = polyvanovTable[syllable];
+                                
+                                if (kanaType === 'katakana') {
+                                    kana = katakanaTable[kana] || kana;
+                                } else if (kanaType === 'mixed') {
+                                    kana = Math.random() > 0.5 ? kana : (katakanaTable[kana] || kana);
+                                }
+                                
+                                replacements.set(syllable, kana);
+                                result += kana;
+                            }
+                            
+                            i += len;
+                            replaced = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (!replaced) {
+                    const char = word[i].toLowerCase();
+                    if (polyvanovTable[char] && selectedKana.has(char)) {
+                        if (replacements.has(char)) {
+                            result += replacements.get(char);
+                        } else {
+                            let kana = polyvanovTable[char];
+                            
+                            if (kanaType === 'katakana') {
+                                kana = katakanaTable[kana] || kana;
+                            } else if (kanaType === 'mixed') {
+                                kana = Math.random() > 0.5 ? kana : (katakanaTable[kana] || kana);
+                            }
+                            
+                            replacements.set(char, kana);
+                            result += kana;
+                        }
+                        
+                        i++;
+                        replaced = true;
+                    }
+                }
+                
+                if (!replaced) {
+                    result += word[i];
+                    i++;
+                }
+            }
+            
+            return result;
+        }
+
+        // Функция замены слов на кандзи
+        function replaceWithKanji(text, maxLevel) {
+            const words = splitTextIntoWords(text);
+            const result = [];
+            let replacedCount = 0;
+            let totalWords = 0;
+            
+            const filteredDictionary = kanjiDictionary.filter(kanji => kanji.level <= maxLevel);
+            
+            for (const word of words) {
+                if (word.type === 'word') {
+                    totalWords++;
+                    
+                    let replaced = false;
+                    for (const kanji of filteredDictionary) {
+                        if (kanji.meanings.some(meaning => meaning.toLowerCase() === word.content.toLowerCase())) {
+                            const span = document.createElement('span');
+                            span.className = `kanji-hint level-${kanji.level}`;
+                            span.textContent = kanji.kanji;
+                            span.dataset.kanji = kanji.kanji;
+                            span.dataset.meanings = kanji.meanings.join(', ');
+                            span.dataset.readingsOn = kanji.readings.on.join(', ');
+                            span.dataset.readingsKun = kanji.readings.kun.join(', ');
+                            span.dataset.level = kanji.level;
+                            
+                            result.push(span.outerHTML);
+                            replaced = true;
+                            replacedCount++;
+                            break;
+                        }
+                    }
+                    
+                    if (!replaced) {
+                        result.push(word.content);
+                    }
+                } else {
+                    result.push(word.content);
+                }
+            }
+            
+            return {
+                text: result.join(''),
+                stats: {
+                    replaced: replacedCount,
+                    total: totalWords,
+                    percentage: totalWords > 0 ? Math.round((replacedCount / totalWords) * 100) : 0
+                }
+            };
+        }
+        
+        // Функция для разбиения HTML-текста
+        function parseHTML(html) {
+            const result = [];
+            let currentIndex = 0;
+            const tagRegex = /<[^>]+>/g;
+            
+            let match;
+            while ((match = tagRegex.exec(html)) !== null) {
+                if (match.index > currentIndex) {
+                    result.push({
+                        type: 'text',
+                        content: html.substring(currentIndex, match.index)
+                    });
+                }
+                
+                result.push({
+                    type: 'tag',
+                    content: match[0]
+                });
+                
+                currentIndex = match.index + match[0].length;
+            }
+            
+            if (currentIndex < html.length) {
+                result.push({
+                    type: 'text',
+                    content: html.substring(currentIndex)
+                });
+            }
+            
+            return result;
+        }
+        
+        // Функция замены текста на кану
+        function replaceWithKana(html, kanaType) {
+            const parts = parseHTML(html);
+            const result = [];
+            
+            for (const part of parts) {
+                if (part.type === 'tag') {
+                    result.push(part.content);
+                } else {
+                    const words = splitTextIntoWords(part.content);
+                    
+                    for (const word of words) {
+                        if (word.type === 'word') {
+                            result.push(processWord(word.content, kanaType));
+                        } else {
+                            result.push(word.content);
+                        }
+                    }
+                }
+            }
+            
+            return result.join('');
+        }
+        
+        // Универсальная функция переключения вкладок
+        function switchToTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }        
+        
+        // Основная функция обработки текста
+        function processText() {
+            const inputText = document.getElementById('input-text').value;
+            const kanjiLevel = parseInt(document.getElementById('kanji-level').value);
+            const kanaType = document.getElementById('kana-type').value;
+            
+            if (!inputText.trim()) {
+                alert('Пожалуйста, выберите или загрузите текст для обработки.');
+                return;
+            }
+            
+            const kanjiResult = replaceWithKanji(inputText, kanjiLevel);
+            const finalResult = preserveLineBreaks(replaceWithKana(kanjiResult.text, kanaType));
+            
+            document.getElementById('output-text').innerHTML = finalResult;
+            addTooltipHandlers();
+            
+            document.getElementById('stats').textContent = 
+                `Заменено кандзи: ${kanjiResult.stats.replaced} из ${kanjiResult.stats.total} слов (${kanjiResult.stats.percentage}%)`;
+            
+            switchToTab('reading');
+        }
+        
+        function renderKanjiList(yearFilter = 'all') {
+            const container = document.getElementById('kanji-list-content');
+            container.innerHTML = '';
+            
+            // Фильтруем кандзи по году
+            const filteredKanji = kanjiDictionary.filter(kanji => {
+                if (yearFilter === 'all') return true;
+                return kanji.level === parseInt(yearFilter);
+            });
+            
+            if (filteredKanji.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #7f8c8d;">Кандзи не найдены</div>';
+                return;
+            }
+            
+            // Сортируем кандзи по уровню и алфавиту
+            /*filteredKanji.sort((a, b) => {
+                if (a.level !== b.level) return a.level - b.level;
+                return (a.meanings[0] || '').localeCompare(b.meanings[0] || '');
+            });*/
+            
+            // Отображаем кандзи
+            filteredKanji.forEach(kanji => {
+                const kanjiItem = document.createElement('div');
+                kanjiItem.className = 'kanji-item';
+                
+                // Выбираем цвет бейджа в зависимости от уровня
+                const badgeClass = `level-${kanji.level}-badge`;
+                
+                // Формируем строку с чтениями
+                let readingsHTML = '';
+                if (kanji.readings.on && kanji.readings.on.length > 0) {
+                    readingsHTML += `<span class="reading-on">${kanji.readings.on.slice(0, 2).join(', ')}</span>`;
+                }
+                if (kanji.readings.kun && kanji.readings.kun.length > 0) {
+                    if (readingsHTML) readingsHTML += ' / ';
+                    readingsHTML += `<span class="reading-kun">${kanji.readings.kun.slice(0, 2).join(', ')}</span>`;
+                }
+                
+                kanjiItem.innerHTML = `
+                    <div class="kanji-char">${kanji.kanji}</div>
+                     <div class="kanji-readings">${readingsHTML}</div>
+                    <div class="kanji-meaning">${kanji.meanings[0] || ''}</div>
+                `;
+                
+                container.appendChild(kanjiItem);
+            });
+        }
+        
+        // Функция для отображения фраз в разговорнике
+        function renderPhrasebook(searchTerm = '') {
+            const phrasesList = document.getElementById('phrases-list');
+            phrasesList.innerHTML = '';
+            
+            const filteredPhrases = phrasebookData.filter(phrase => {
+                if (!searchTerm) return true;
+                
+                const searchLower = searchTerm.toLowerCase();
+                return (
+                    phrase.russian.toLowerCase().includes(searchLower) ||
+                    phrase.japanese.toLowerCase().includes(searchLower) ||
+                    phrase.romaji.toLowerCase().includes(searchLower) ||
+                    phrase.kiriji.toLowerCase().includes(searchLower)
+                );
+            });
+            
+            if (filteredPhrases.length === 0) {
+                phrasesList.innerHTML = '<div class="no-results">Фразы не найдены</div>';
+                return;
+            }
+            
+            filteredPhrases.forEach(phrase => {
+                const phraseElement = document.createElement('div');
+                phraseElement.className = 'phrase-item';
+                
+                phraseElement.innerHTML = `
+                    <div class="phrase-line phrase-russian">${phrase.russian}</div>
+                    <div class="phrase-line phrase-japanese">${phrase.japanese}</div>
+                    <div class="phrase-line phrase-romaji">${phrase.romaji}</div>
+                    <div class="phrase-line phrase-kiriji">${phrase.kiriji}</div>
+                `;
+                
+                phrasesList.appendChild(phraseElement);
+            });
+        }
+        
+        // Добавление обработчиков для подсказок
+        function addTooltipHandlers() {
+            const tooltip = document.getElementById('tooltip');
+            const kanjiElements = document.querySelectorAll('.kanji-hint');
+            
+            kanjiElements.forEach(element => {
+                element.addEventListener('mouseenter', function(e) {
+                    const rect = this.getBoundingClientRect();
+                    tooltip.style.left = (rect.left + window.scrollX) + 'px';
+                    tooltip.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+                    
+                    tooltip.innerHTML = `
+                        <strong>${this.dataset.kanji}</strong><br>
+                        <em>${this.dataset.meanings}</em><br>
+                        Он: ${this.dataset.readingsOn}<br>
+                        Кун: ${this.dataset.readingsKun}<br>
+                        Уровень: ${this.dataset.level} класс
+                    `;
+                    
+                    tooltip.style.display = 'block';
+                });
+                
+                element.addEventListener('mouseleave', function() {
+                    tooltip.style.display = 'none';
+                });
+            });
+        }
+        
+        // Загрузка файла
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('input-text').value = e.target.result;
+                processText();
+            };
+            reader.readAsText(file);
+        }
+		
+		// Функция для поиска кандзи по русскому значению
+		function searchKanjiByRussian(searchText) {
+			if (!searchText || searchText.trim() === '') {
+				return [];
+			}
+			
+			const searchLower = searchText.toLowerCase().trim();
+			const results = [];
+			
+			kanjiDictionary.forEach(kanji => {
+				// Ищем в массиве значений
+				for (const meaning of kanji.meanings) {
+					if (meaning.toLowerCase().includes(searchLower)) {
+						results.push(kanji);
+						break; // Не добавляем один и тот же кандзи несколько раз
+					}
+				}
+			});
+			
+			return results;
+		}
+
+		// Функция для отображения результатов поиска
+		function displaySearchResults(results) {
+			const resultsContainer = document.getElementById('kanji-search-results');
+			
+			if (!results || results.length === 0) {
+				resultsContainer.innerHTML = '<div class="no-results">Не найдено</div>';
+				resultsContainer.style.display = 'block';
+				return;
+			}
+			
+			let html = '';
+			results.forEach(kanji => {
+				const levelClass = `level-${kanji.level}-badge`;
+				
+				html += `
+					<div class="kanji-item">
+						<div class="kanji-char">${kanji.kanji}</div>
+						<div class="kanji-furigana">${kanji.furigana || ''}</div>
+						<div class="kanji-kiriji">${kanji.kiriji || ''}</div>
+						<div class="kanji-meaning">${kanji.meanings.join(', ')}</div>
+						<div class="level-badge ${levelClass}">${kanji.level} класс</div>
+					</div>
+				`;
+			});
+			
+			resultsContainer.innerHTML = html;
+			resultsContainer.style.display = 'grid';
+		}
+
+		// Обработчик ввода в поле поиска
+		function setupKanjiSearch() {
+			const searchInput = document.getElementById('kanji-search-input');
+			const searchResults = document.getElementById('kanji-search-results');
+			
+			if (!searchInput) return;
+			
+			// Дебаунс для поиска
+			let searchTimeout;
+			searchInput.addEventListener('input', function() {
+				clearTimeout(searchTimeout);
+				
+				const searchText = this.value;
+				
+				if (searchText.trim() === '') {
+					searchResults.style.display = 'none';
+					searchResults.innerHTML = '';
+					return;
+				}
+				
+				searchTimeout = setTimeout(() => {
+					const results = searchKanjiByRussian(searchText);
+					displaySearchResults(results);
+				}, 300); // Задержка 300мс
+			});
+			
+			// Очистка при клике вне поля поиска
+			document.addEventListener('click', function(e) {
+				if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+					if (searchInput.value.trim() === '') {
+						searchResults.style.display = 'none';
+						searchResults.innerHTML = '';
+					}
+				}
+			});
+			
+			// Фокус на поле поиска
+			searchInput.addEventListener('focus', function() {
+				if (this.value.trim() !== '') {
+					const results = searchKanjiByRussian(this.value);
+					displaySearchResults(results);
+				}
+			});
+		}
+
+		// Инициализация поиска при загрузке страницы
+		document.addEventListener('DOMContentLoaded', function() {
+			// Вызываем после загрузки данных кандзи
+			setTimeout(setupKanjiSearch, 500);
+		});		
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            loadKanjiData();
+            generateFuriganaForKanji();
+            createKanaTable();
+            renderPhrasebook();
+            renderKanaTable('hiragana');
+            renderKanjiList('all');
+            
+            switchToTab('settings');
+            
+            document.getElementById('process-btn').addEventListener('click', processText);
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchToTab(this.dataset.tab);
+                    
+                    if (this.dataset.tab === 'kana-table') {
+                        document.getElementById('show-hiragana').classList.add('active');
+                        document.getElementById('show-katakana').classList.remove('active');
+                        renderKanaTable('hiragana');
+                    } else if (this.dataset.tab === 'kanji-list') {
+                        document.querySelectorAll('.kanji-year-selector button').forEach(btn => {
+                            btn.classList.remove('active');
+                        });
+                        document.querySelector('.kanji-year-selector button[data-year="all"]').classList.add('active');
+                        renderKanjiList('all');
+                    }
+                });
+            });
+            
+            document.getElementById('text-selector').addEventListener('change', function() {
+                const selectedText = sampleTexts[this.value];
+                if (selectedText) {
+                    document.getElementById('input-text').value = selectedText;
+                    processText();
+                }
+            });
+            
+            document.getElementById('file-input').addEventListener('change', handleFileSelect);
+            
+            document.getElementById('select-all-kana').addEventListener('click', function() {
+                document.querySelectorAll('.kana-item').forEach(item => {
+                    item.classList.add('selected');
+                    selectedKana.add(item.dataset.romaji);
+                });
+            });
+            
+            document.getElementById('deselect-all-kana').addEventListener('click', function() {
+                document.querySelectorAll('.kana-item').forEach(item => {
+                    item.classList.remove('selected');
+                    selectedKana.delete(item.dataset.romaji);
+                });
+            });
+            
+            document.getElementById('phrase-search').addEventListener('input', function() {
+                renderPhrasebook(this.value);
+            });
+            
+            document.getElementById('show-hiragana').addEventListener('click', function() {
+                document.getElementById('show-hiragana').classList.add('active');
+                document.getElementById('show-katakana').classList.remove('active');
+                renderKanaTable('hiragana');
+            });
+            
+            document.getElementById('show-katakana').addEventListener('click', function() {
+                document.getElementById('show-hiragana').classList.remove('active');
+                document.getElementById('show-katakana').classList.add('active');
+                renderKanaTable('katakana');
+            });
+            
+            document.querySelectorAll('.kanji-year-selector button').forEach(button => {
+                button.addEventListener('click', function() {
+                    document.querySelectorAll('.kanji-year-selector button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    this.classList.add('active');
+                    renderKanjiList(this.dataset.year);
+                });
+            });
+            
+            document.getElementById('input-text').value = sampleTexts.text1;
+        });
+    </script>
+</body>
+</html>
