@@ -2,12 +2,84 @@
   "name": "Транскриптор русский → японский",
   "short_name": "Транскриптор",
   "description": "Поэтапная транскрипция русского текста в японскую письменность с обучением кандзи",
-  "start_url": ".",
-  "scope": ".",
+  "lang": "ru",
+  "dir": "ltr",
+  
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f5f5f5",
+  "display_override": ["window-controls-overlay", "standalone"],
+  
+  "background_color": "#2c3e50",
   "theme_color": "#2c3e50",
   "orientation": "portrait-primary",
+  
+  "categories": ["education", "books", "utilities"],
+  
+  "prefer_related_applications": false,
+  "related_applications": [],
+  
+  "id": "/jap-lang/",
+  "launch_handler": {
+    "client_mode": "auto"
+  },
+  
+  "handle_links": "preferred",
+  "scope_extensions": [],
+  
+  "protocol_handlers": [],
+  "shortcuts": [
+    {
+      "name": "Новая транскрипция",
+      "short_name": "Транскрипция",
+      "description": "Начать новую транскрипцию текста",
+      "url": "./?new",
+      "icons": [
+        {
+          "src": "icons/shortcut-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Таблица каны",
+      "short_name": "Кана",
+      "description": "Открыть таблицу японской каны",
+      "url": "./#kana",
+      "icons": [
+        {
+          "src": "icons/shortcut-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Кандзи по классам",
+      "short_name": "Кандзи",
+      "description": "Список кандзи по годам обучения",
+      "url": "./#kanji",
+      "icons": [
+        {
+          "src": "icons/shortcut-96x96.png", 
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  
+  "share_target": {
+    "action": "./?share",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  
   "icons": [
     {
       "src": "icons/icon-72x72.png",
@@ -41,6 +113,11 @@
       "purpose": "any maskable"
     },
     {
+      "src": "icons/icon-256x256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
       "src": "icons/icon-384x384.png",
       "sizes": "384x384",
       "type": "image/png"
@@ -48,7 +125,18 @@
     {
       "src": "icons/icon-512x512.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-1024x1024.png",
+      "sizes": "1024x1024",
       "type": "image/png"
     }
-  ]
+  ],
+  
+  
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }
