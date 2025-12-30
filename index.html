@@ -769,6 +769,7 @@
     
     <footer>
         <p>Транскриптор русский → японский | Использует список Кёику-кандзи (1026 иероглифов)</p>
+		<button id="installButton" style="display:none;">📲 Установить приложение</button>
     </footer>
 
     <script>
@@ -3269,7 +3270,33 @@
 				  console.log('Ошибка регистрации ServiceWorker: ', error);
 				});
 			});
-		  }		
+		  }	
+
+		if (/Android|iPhone|iPad/.test(navigator.userAgent)) {
+		  let deferredPrompt;
+		  const installBtn = document.getElementById('installButton');
+		  
+		  window.addEventListener('beforeinstallprompt', (e) => {
+			// Предотвращаем автоматический показ баннера
+			e.preventDefault();
+			deferredPrompt = e;
+			
+			// Показываем свою кнопку
+			installBtn.style.display = 'block';
+			
+			installBtn.addEventListener('click', () => {
+			  // Показываем нативный баннер установки
+			  deferredPrompt.prompt();
+			  
+			  deferredPrompt.userChoice.then((choiceResult) => {
+				if (choiceResult.outcome === 'accepted') {
+				  console.log('Пользователь установил PWA');
+				}
+				deferredPrompt = null;
+			  });
+			});
+		  });
+		}		  
 		
     </script>
 </body>
