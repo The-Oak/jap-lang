@@ -608,7 +608,97 @@
 			color: #7f8c8d;
 			font-style: italic;
 			grid-column: 1 / -1;
-		}		
+		}
+		
+		/* Стили для вкладки Info */
+		.info-container {
+			display: flex;
+			flex-direction: column;
+			gap: 30px;
+			padding: 20px 0;
+		}
+
+		@media (min-width: 768px) {
+			.info-container {
+				flex-direction: row;
+				align-items: flex-start;
+			}
+			
+			.qr-code {
+				flex: 0 0 200px;
+			}
+		}
+
+		.qr-code {
+			text-align: center;
+			padding: 15px;
+			background: #f8f9fa;
+			border-radius: 12px;
+			box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+		}
+
+		.qr-caption {
+			margin-top: 10px;
+			font-size: 0.9rem;
+			color: #666;
+			font-style: italic;
+		}
+
+		.info-content {
+			flex: 1;
+		}
+
+		.info-item {
+			margin-bottom: 25px;
+			padding-bottom: 20px;
+			border-bottom: 1px solid #eee;
+		}
+
+		.info-item:last-child {
+			border-bottom: none;
+			margin-bottom: 0;
+		}
+
+		.info-item h3 {
+			color: #2c3e50;
+			margin-bottom: 10px;
+			font-size: 1.2rem;
+		}
+
+		.info-item p {
+			line-height: 1.6;
+			color: #555;
+			margin-bottom: 8px;
+		}
+
+		.info-item ul {
+			padding-left: 20px;
+			margin: 10px 0;
+		}
+
+		.info-item li {
+			margin-bottom: 8px;
+			line-height: 1.5;
+			color: #555;
+		}
+
+		#installPWA {
+			background: #3498db;
+			color: white;
+			border: none;
+			padding: 12px 20px;
+			border-radius: 6px;
+			font-size: 1rem;
+			cursor: pointer;
+			transition: background 0.3s;
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		#installPWA:hover {
+			background: #2980b9;
+		}
     </style>
 </head>
 <body>
@@ -623,6 +713,7 @@
         <div class="tab" data-tab="kana-table">Таблица каны</div>
         <div class="tab" data-tab="kanji-list">Список кандзи</div>
         <div class="tab" data-tab="phrasebook">Разговорник</div>
+        <div class="tab" data-tab="info">Info</div>
     </div>
     
     <div class="tab-content" id="reading-tab">
@@ -765,11 +856,58 @@
         </div>
     </div>
     
+    <!-- Новая вкладка с информацией -->
+    <div class="tab-content" id="info-tab">
+        <div class="panel full-width-panel">
+            <h2>О программе</h2>
+            <div class="info-container">
+                <div class="qr-code">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://japanese-transcriptor.example.com" 
+                         alt="QR-код приложения" style="max-width: 200px; width: 100%; height: auto;">
+                    <p class="qr-caption">Сканируйте для доступа к приложению</p>
+                </div>
+                
+                <div class="info-content">
+                    <div class="info-item">
+                        <h3>Транскриптор русский → японский</h3>
+                        <p>Интерактивный инструмент для поэтапного изучения японской письменности.</p>
+                    </div>
+                    
+                    <div class="info-item">
+                        <h3>Возможности</h3>
+                        <ul>
+                            <li>Транскрипция русских текстов в кану</li>
+                            <li>Поэтапное изучение кандзи по классам</li>
+                            <li>Интерактивные таблицы каны</li>
+                            <li>Японский разговорник с поиском</li>
+                            <li>Адаптивность для мобильных устройств</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="info-item">
+                        <h3>Используемые данные</h3>
+                        <p>• Кёику-кандзи (1026 иероглифов)</p>
+                        <p>• Система транскрипции Поливанова</p>
+                        <p>• Стандартные японские учебные материалы</p>
+                    </div>
+                    
+                    <div class="info-item">
+                        <h3>Для мобильных устройств</h3>
+                        <p>Приложение поддерживает PWA-технологии и может быть установлено на смартфон как нативное приложение.</p>
+                        <button id="installPWA" class="button" style="margin-top: 10px;">
+                            📲 Установить как приложение
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div id="tooltip" class="kanji-tooltip"></div>
     
     <footer>
-        <p>Транскриптор русский → японский | Использует список Кёику-кандзи (1026 иероглифов)</p>
-		<button id="installButton">📲 Установить приложение</button>
+        <p>Транскриптор русский → японский | Использует список Кёику 1026 иероглифов</p>
+		<button id="installButton" style="display:none;">📲 Установить приложение</button>
     </footer>
 
     <script>
@@ -838,6 +976,27 @@
             'ぴゃ': 'ピャ', 'ぴゅ': 'ピュ', 'ぴょ': 'ピョ'
         };
         
+            // Классическая последовательность групп каны
+            const kanaGroups = [
+                {title: "Гласные", kana: ['あ', 'い', 'う', 'え', 'お'], romaji: ['а', 'и', 'у', 'э', 'о']},
+                {title: "K-группа", kana: ['か', 'き', 'く', 'け', 'こ'], romaji: ['ка', 'ки', 'ку', 'кэ', 'ко']},
+                {title: "S-группа", kana: ['さ', 'し', 'す', 'せ', 'そ'], romaji: ['са', 'си', 'су', 'сэ', 'со']},
+                {title: "T-группа", kana: ['た', 'ち', 'つ', 'て', 'と'], romaji: ['та', 'ти', 'цу', 'тэ', 'то']},
+                {title: "N-группа", kana: ['な', 'に', 'ぬ', 'ね', 'の'], romaji: ['на', 'ни', 'ну', 'нэ', 'но']},
+                {title: "H-группа", kana: ['は', 'ひ', 'ふ', 'へ', 'ほ'], romaji: ['ха', 'хи', 'фу', 'хэ', 'хо']},
+                {title: "M-группа", kana: ['ま', 'み', 'む', 'め', 'も'], romaji: ['ма', 'ми', 'му', 'мэ', 'мо']},
+                {title: "Y-группа", kana: ['や', '', 'ゆ', '', 'よ'], romaji: ['я', '', 'ю', '', 'ё']},
+                {title: "R-группа", kana: ['ら', 'り', 'る', 'れ', 'ろ'], romaji: ['ра', 'ри', 'ру', 'рэ', 'ро']},
+                {title: "W/N", kana: ['わ', '', '', '', 'を'], romaji: ['ва', '', '', '', 'о']},
+                {title: "Н", kana: ['ん', '', '', '', ''], romaji: ['н', '', '', '', '']},
+                {title: "G-группа", kana: ['が', 'ぎ', 'ぐ', 'げ', 'ご'], romaji: ['га', 'ги', 'гу', 'гэ', 'го']},
+                {title: "Z-группа", kana: ['ざ', 'じ', 'ず', 'ぜ', 'ぞ'], romaji: ['дза', 'дзи', 'дзу', 'дзэ', 'дзо']},
+                {title: "D-группа", kana: ['だ', 'ぢ', 'づ', 'で', 'ど'], romaji: ['да', 'ди', 'ду', 'дэ', 'до']},
+                {title: "B-группа", kana: ['ば', 'び', 'ぶ', 'べ', 'ぼ'], romaji: ['ба', 'би', 'бу', 'бэ', 'бо']},
+                {title: "P-группа", kana: ['ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ'], romaji: ['па', 'пи', 'пу', 'пэ', 'по']}
+            ];
+		
+		
         // База данных фраз для разговорника
 		const phrasebookData = [
 			// === ПРИВЕТСТВИЕ И ОБЩЕНИЕ ===
@@ -2559,7 +2718,7 @@
                 'bya': 'бя', 'byu': 'бю', 'byo': 'бё',
                 'pya': 'пя', 'pyu': 'пю', 'pyo': 'пё'
             };
-            
+                   
             let kiriji = japaneseReading.toLowerCase();
             kiriji = kiriji.replace(/[ō:]/g, 'о:').replace(/[ū:]/g, 'у:');
             
@@ -2576,26 +2735,7 @@
             const kanaTable = document.getElementById('kana-table');
             kanaTable.innerHTML = '';
             
-            // Классическая последовательность групп каны
-            const kanaGroups = [
-                {title: "Гласные", kana: ['あ', 'い', 'う', 'え', 'お'], romaji: ['а', 'и', 'у', 'э', 'о']},
-                {title: "K-группа", kana: ['か', 'き', 'く', 'け', 'こ'], romaji: ['ка', 'ки', 'ку', 'кэ', 'ко']},
-                {title: "S-группа", kana: ['さ', 'し', 'す', 'せ', 'そ'], romaji: ['са', 'си', 'су', 'сэ', 'со']},
-                {title: "T-группа", kana: ['た', 'ち', 'つ', 'て', 'と'], romaji: ['та', 'ти', 'цу', 'тэ', 'то']},
-                {title: "N-группа", kana: ['な', 'に', 'ぬ', 'ね', 'の'], romaji: ['на', 'ни', 'ну', 'нэ', 'но']},
-                {title: "H-группа", kana: ['は', 'ひ', 'ふ', 'へ', 'ほ'], romaji: ['ха', 'хи', 'фу', 'хэ', 'хо']},
-                {title: "M-группа", kana: ['ま', 'み', 'む', 'め', 'も'], romaji: ['ма', 'ми', 'му', 'мэ', 'мо']},
-                {title: "Y-группа", kana: ['や', '', 'ゆ', '', 'よ'], romaji: ['я', '', 'ю', '', 'ё']},
-                {title: "R-группа", kana: ['ら', 'り', 'る', 'れ', 'ろ'], romaji: ['ра', 'ри', 'ру', 'рэ', 'ро']},
-                {title: "W/N", kana: ['わ', '', '', '', 'を'], romaji: ['ва', '', '', '', 'о']},
-                {title: "Н", kana: ['ん', '', '', '', ''], romaji: ['н', '', '', '', '']},
-                {title: "G-группа", kana: ['が', 'ぎ', 'ぐ', 'げ', 'ご'], romaji: ['га', 'ги', 'гу', 'гэ', 'го']},
-                {title: "Z-группа", kana: ['ざ', 'じ', 'ず', 'ぜ', 'ぞ'], romaji: ['дза', 'дзи', 'дзу', 'дзэ', 'дзо']},
-                {title: "D-группа", kana: ['だ', 'ぢ', 'づ', 'で', 'ど'], romaji: ['да', 'ди', 'ду', 'дэ', 'до']},
-                {title: "B-группа", kana: ['ば', 'び', 'ぶ', 'べ', 'ぼ'], romaji: ['ба', 'би', 'бу', 'бэ', 'бо']},
-                {title: "P-группа", kana: ['ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ'], romaji: ['па', 'пи', 'пу', 'пэ', 'по']}
-            ];
-            
+             
             // Создаем таблицу
             kanaGroups.forEach(group => {
                 for (let i = 0; i < group.kana.length; i++) {
@@ -2633,281 +2773,276 @@
             const container = document.getElementById('kana-table-content');
             container.innerHTML = '';
             
-            // Классическая последовательность групп каны с полными названиями
-            const kanaGroups = [
-                {title: "Гласные (あ行)", kana: ['あ', 'い', 'う', 'え', 'お'], romaji: ['а', 'и', 'у', 'э', 'о']},
-                {title: "K-группа (か行)", kana: ['か', 'き', 'く', 'け', 'こ'], romaji: ['ка', 'ки', 'ку', 'кэ', 'ко']},
-                {title: "S-группа (さ行)", kana: ['さ', 'し', 'す', 'せ', 'そ'], romaji: ['са', 'си', 'су', 'сэ', 'со']},
-                {title: "T-группа (た行)", kana: ['た', 'ち', 'つ', 'て', 'と'], romaji: ['та', 'ти', 'цу', 'тэ', 'то']},
-                {title: "N-группа (な行)", kana: ['な', 'に', 'ぬ', 'ね', 'の'], romaji: ['на', 'ни', 'ну', 'нэ', 'но']},
-                {title: "H-группа (は行)", kana: ['は', 'ひ', 'ふ', 'へ', 'ほ'], romaji: ['ха', 'хи', 'фу', 'хэ', 'хо']},
-                {title: "M-группа (ま行)", kana: ['ま', 'み', 'む', 'め', 'も'], romaji: ['ма', 'ми', 'му', 'мэ', 'мо']},
-                {title: "Y-группа (や行)", kana: ['や', '', 'ゆ', '', 'よ'], romaji: ['я', '', 'ю', '', 'ё']},
-                {title: "R-группа (ら行)", kana: ['ら', 'り', 'る', 'れ', 'ろ'], romaji: ['ра', 'ри', 'ру', 'рэ', 'ро']},
-                {title: "W-группа (わ行)", kana: ['わ', '', '', '', 'を'], romaji: ['ва', '', '', '', 'о']},
-                {title: "Н (ん)", kana: ['ん', '', '', '', ''], romaji: ['н', '', '', '', '']},
-                {title: "G-группа (が行)", kana: ['が', 'ぎ', 'ぐ', 'げ', 'ご'], romaji: ['га', 'ги', 'гу', 'гэ', 'го']},
-                {title: "Z-группа (ざ行)", kana: ['ざ', 'じ', 'ず', 'ぜ', 'ぞ'], romaji: ['дза', 'дзи', 'дзу', 'дзэ', 'дзо']},
-                {title: "D-группа (だ行)", kana: ['だ', 'ぢ', 'づ', 'で', 'ど'], romaji: ['да', 'ди', 'ду', 'дэ', 'до']},
-                {title: "B-группа (ば行)", kana: ['ば', 'び', 'ぶ', 'べ', 'ぼ'], romaji: ['ба', 'би', 'бу', 'бэ', 'бо']},
-                {title: "P-группа (ぱ行)", kana: ['ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ'], romaji: ['па', 'пи', 'пу', 'пэ', 'по']},
-                {title: "Сложные слоги (きゃ行)", kana: ['きゃ', 'きゅ', 'きょ', '', ''], romaji: ['кя', 'кю', 'кё', '', '']},
-                {title: "Сложные слоги (しゃ行)", kana: ['しゃ', 'しゅ', 'しょ', '', ''], romaji: ['ся', 'сю', 'сё', '', '']},
-                {title: "Сложные слоги (ちゃ行)", kana: ['ちゃ', 'ちゅ', 'ちょ', '', ''], romaji: ['тя', 'тю', 'тё', '', '']},
-                {title: "Сложные слоги (にゃ行)", kana: ['にゃ', 'にゅ', 'にょ', '', ''], romaji: ['ня', 'ню', 'нё', '', '']},
-                {title: "Сложные слоги (ひゃ行)", kana: ['ひゃ', 'ひゅ', 'ひょ', '', ''], romaji: ['хя', 'хю', 'хё', '', '']},
-                {title: "Сложные слоги (みゃ行)", kana: ['みゃ', 'みゅ', 'みょ', '', ''], romaji: ['мя', 'мю', 'мё', '', '']},
-                {title: "Сложные слоги (りゃ行)", kana: ['りゃ', 'りゅ', 'りょ', '', ''], romaji: ['ря', 'рю', 'рё', '', '']},
-                {title: "Сложные слоги (ぎゃ行)", kana: ['ぎゃ', 'ぎゅ', 'ぎょ', '', ''], romaji: ['гя', 'гю', 'гё', '', '']},
-                {title: "Сложные слоги (じゃ行)", kana: ['じゃ', 'じゅ', 'じょ', '', ''], romaji: ['дзя', 'дзю', 'дзё', '', '']},
-                {title: "Сложные слоги (びゃ行)", kana: ['びゃ', 'びゅ', 'びょ', '', ''], romaji: ['бя', 'бю', 'бё', '', '']},
-                {title: "Сложные слоги (ぴゃ行)", kana: ['ぴゃ', 'ぴゅ', 'ぴょ', '', ''], romaji: ['пя', 'пю', 'пё', '', '']}
-            ];
             
-            // Создаем группы
             kanaGroups.forEach(group => {
                 const groupDiv = document.createElement('div');
                 groupDiv.className = 'kana-group';
                 
-                const titleDiv = document.createElement('div');
-                titleDiv.className = 'kana-group-title';
-                titleDiv.textContent = group.title;
-                groupDiv.appendChild(titleDiv);
+                const title = document.createElement('div');
+                title.className = 'kana-group-title';
+                title.textContent = group.title;
+                groupDiv.appendChild(title);
                 
-                const gridDiv = document.createElement('div');
-                gridDiv.className = 'kana-group-grid';
+                const grid = document.createElement('div');
+                grid.className = 'kana-group-grid';
                 
                 for (let i = 0; i < group.kana.length; i++) {
-                    if (group.kana[i] && group.romaji[i]) {
-                        const kanaCell = document.createElement('div');
-                        kanaCell.className = `kana-cell ${kanaType === 'katakana' ? 'katakana' : ''}`;
+                    if (group.kana[i]) {
+                        const cell = document.createElement('div');
+                        cell.className = `kana-cell ${kanaType === 'katakana' ? 'katakana' : ''}`;
                         
-                        let kanaChar = group.kana[i];
-                        if (kanaType === 'katakana') {
-                            kanaChar = katakanaTable[group.kana[i]] || group.kana[i];
-                        }
+                        const kanaChar = document.createElement('div');
+                        kanaChar.className = 'kana-char-large';
+                        kanaChar.textContent = kanaType === 'katakana' ? 
+                            (katakanaTable[group.kana[i]] || group.kana[i]) : 
+                            group.kana[i];
                         
-                        kanaCell.innerHTML = `
-                            <div class="kana-char-large">${kanaChar}</div>
-                            <div class="kana-romaji-large">${group.romaji[i]}</div>
-                         `;
+                        const romaji = document.createElement('div');
+                        romaji.className = 'kana-romaji-large';
+                        romaji.textContent = group.romaji[i];
                         
-                        gridDiv.appendChild(kanaCell);
+                        cell.appendChild(kanaChar);
+                        cell.appendChild(romaji);
+                        grid.appendChild(cell);
                     }
                 }
                 
-                groupDiv.appendChild(gridDiv);
+                groupDiv.appendChild(grid);
                 container.appendChild(groupDiv);
             });
         }
         
-        // Функция для разбиения текста на слова
-        function splitTextIntoWords(text) {
-            const wordRegex = /[a-zA-Zа-яА-ЯёЁ]+/g;
-            const words = [];
-            let lastIndex = 0;
+        // Рендеринг списка кандзи
+        function renderKanjiList(year = 'all') {
+            const container = document.getElementById('kanji-list-content');
+            container.innerHTML = '';
             
-            let match;
-            while ((match = wordRegex.exec(text)) !== null) {
-                if (match.index > lastIndex) {
-                    words.push({
-                        type: 'non-word',
-                        content: text.substring(lastIndex, match.index)
-                    });
-                }
-                
-                words.push({
-                    type: 'word',
-                    content: match[0]
-                });
-                
-                lastIndex = match.index + match[0].length;
+            const filteredKanji = year === 'all' ? 
+                kanjiDictionary : 
+                kanjiDictionary.filter(k => k.level == year);
+            
+            if (filteredKanji.length === 0) {
+                container.innerHTML = '<div class="no-results">Кандзи не найдены</div>';
+                return;
             }
             
-            if (lastIndex < text.length) {
-                words.push({
-                    type: 'non-word',
-                    content: text.substring(lastIndex)
-                });
-            }
-            
-            return words;
+            filteredKanji.forEach(kanji => {
+                const kanjiItem = document.createElement('div');
+                kanjiItem.className = 'kanji-item';
+                
+                kanjiItem.innerHTML = `
+                    <div class="kanji-char">${kanji.kanji}</div>
+                    <div class="kanji-furigana">${kanji.furigana || ''}</div>
+                    <div class="kanji-kiriji">${kanji.kiriji || ''}</div>
+                    <div class="kanji-meaning">${kanji.meanings.join(', ')}</div>
+                    <div class="level-badge level-${kanji.level}-badge">${kanji.level} класс</div>
+                `;
+                
+                container.appendChild(kanjiItem);
+            });
         }
-
-        // Функция обработки слова
-        function processWord(word, kanaType) {
-            let result = '';
-            let i = 0;
-            const replacements = new Map();
+        
+        // Рендеринг разговорника
+        function renderPhrasebook(searchTerm = '') {
+            const container = document.getElementById('phrases-list');
+            container.innerHTML = '';
             
-            while (i < word.length) {
-                let replaced = false;
-                
-                for (let len = 3; len >= 2; len--) {
-                    if (i + len <= word.length) {
-                        const syllable = word.substring(i, i + len).toLowerCase();
-                        if (polyvanovTable[syllable] && selectedKana.has(syllable)) {
-                            if (replacements.has(syllable)) {
-                                result += replacements.get(syllable);
-                            } else {
-                                let kana = polyvanovTable[syllable];
-                                
-                                if (kanaType === 'katakana') {
-                                    kana = katakanaTable[kana] || kana;
-                                } else if (kanaType === 'mixed') {
-                                    kana = Math.random() > 0.5 ? kana : (katakanaTable[kana] || kana);
-                                }
-                                
-                                replacements.set(syllable, kana);
-                                result += kana;
-                            }
-                            
-                            i += len;
-                            replaced = true;
-                            break;
-                        }
-                    }
-                }
-                
-                if (!replaced) {
-                    const char = word[i].toLowerCase();
-                    if (polyvanovTable[char] && selectedKana.has(char)) {
-                        if (replacements.has(char)) {
-                            result += replacements.get(char);
-                        } else {
-                            let kana = polyvanovTable[char];
-                            
-                            if (kanaType === 'katakana') {
-                                kana = katakanaTable[kana] || kana;
-                            } else if (kanaType === 'mixed') {
-                                kana = Math.random() > 0.5 ? kana : (katakanaTable[kana] || kana);
-                            }
-                            
-                            replacements.set(char, kana);
-                            result += kana;
-                        }
-                        
-                        i++;
-                        replaced = true;
-                    }
-                }
-                
-                if (!replaced) {
-                    result += word[i];
-                    i++;
-                }
+            const filteredPhrases = searchTerm ? 
+                phrasebookData.filter(phrase => 
+                    phrase.russian.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    phrase.japanese.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    phrase.romaji.toLowerCase().includes(searchTerm.toLowerCase())
+                ) : 
+                phrasebookData;
+            
+            if (filteredPhrases.length === 0) {
+                container.innerHTML = '<div class="no-results">Фразы не найдены</div>';
+                return;
             }
             
-            return result;
+            filteredPhrases.forEach(phrase => {
+                const phraseItem = document.createElement('div');
+                phraseItem.className = 'phrase-item';
+                
+                phraseItem.innerHTML = `
+                    <div class="phrase-line">
+                        <span class="phrase-russian">${phrase.russian}</span>
+                    </div>
+                    <div class="phrase-line">
+                        <span class="phrase-japanese">${phrase.japanese}</span>
+                    </div>
+                    <div class="phrase-line">
+                        <span class="phrase-romaji">${phrase.romaji}</span>
+                    </div>
+                    <div class="phrase-line">
+                        <span class="phrase-kiriji">${phrase.kiriji}</span>
+                    </div>
+                `;
+                
+                container.appendChild(phraseItem);
+            });
         }
-
-        // Функция замены слов на кандзи
-        function replaceWithKanji(text, maxLevel) {
-            const words = splitTextIntoWords(text);
-            const result = [];
-            let replacedCount = 0;
-            let totalWords = 0;
+        
+        // Поиск кандзи
+        function searchKanji(term) {
+            const container = document.getElementById('kanji-search-results');
             
-            const filteredDictionary = kanjiDictionary.filter(kanji => kanji.level <= maxLevel);
-            
-            for (const word of words) {
-                if (word.type === 'word') {
-                    totalWords++;
-                    
-                    let replaced = false;
-                    for (const kanji of filteredDictionary) {
-                        if (kanji.meanings.some(meaning => meaning.toLowerCase() === word.content.toLowerCase())) {
-                            const span = document.createElement('span');
-                            span.className = `kanji-hint level-${kanji.level}`;
-                            span.textContent = kanji.kanji;
-                            span.dataset.kanji = kanji.kanji;
-                            span.dataset.meanings = kanji.meanings.join(', ');
-                            span.dataset.readingsOn = kanji.readings.on.join(', ');
-                            span.dataset.readingsKun = kanji.readings.kun.join(', ');
-                            span.dataset.level = kanji.level;
-                            
-                            result.push(span.outerHTML);
-                            replaced = true;
-                            replacedCount++;
-                            break;
-                        }
-                    }
-                    
-                    if (!replaced) {
-                        result.push(word.content);
-                    }
-                } else {
-                    result.push(word.content);
-                }
+            if (!term.trim()) {
+                container.style.display = 'none';
+                return;
             }
             
-            return {
-                text: result.join(''),
-                stats: {
-                    replaced: replacedCount,
-                    total: totalWords,
-                    percentage: totalWords > 0 ? Math.round((replacedCount / totalWords) * 100) : 0
-                }
+            const results = kanjiDictionary.filter(kanji => 
+                kanji.meanings.some(meaning => 
+                    meaning.toLowerCase().includes(term.toLowerCase())
+                ) ||
+                kanji.kanji.includes(term)
+            );
+            
+            container.innerHTML = '';
+            
+            if (results.length === 0) {
+                container.innerHTML = '<div class="no-results">Кандзи не найдены</div>';
+            } else {
+                results.forEach(kanji => {
+                    const kanjiItem = document.createElement('div');
+                    kanjiItem.className = 'kanji-item';
+                    
+                    kanjiItem.innerHTML = `
+                        <div class="kanji-char">${kanji.kanji}</div>
+                        <div class="kanji-furigana">${kanji.furigana || ''}</div>
+                        <div class="kanji-kiriji">${kanji.kiriji || ''}</div>
+                        <div class="kanji-meaning">${kanji.meanings.join(', ')}</div>
+                        <div class="level-badge level-${kanji.level}-badge">${kanji.level} класс</div>
+                    `;
+                    
+                    container.appendChild(kanjiItem);
+                });
+            }
+            
+            container.style.display = 'block';
+        }
+        
+        // Основная функция обработки текста
+        function processText() {
+            const inputText = document.getElementById('input-text').value;
+            const kanjiLevel = parseInt(document.getElementById('kanji-level').value);
+            const kanaType = document.getElementById('kana-type').value;
+            
+            if (!inputText.trim()) {
+                alert('Пожалуйста, введите или выберите текст для обработки.');
+                return;
+            }
+            
+            let result = inputText;
+            let stats = {
+                totalChars: inputText.length,
+                replacedChars: 0,
+                kanjiCount: 0
             };
-        }
-        
-        // Функция для разбиения HTML-текста
-        function parseHTML(html) {
-            const result = [];
-            let currentIndex = 0;
-            const tagRegex = /<[^>]+>/g;
             
-            let match;
-            while ((match = tagRegex.exec(html)) !== null) {
-                if (match.index > currentIndex) {
-                    result.push({
-                        type: 'text',
-                        content: html.substring(currentIndex, match.index)
-                    });
-                }
+            // Транскрипция русских слогов в кану
+            const russianText = inputText.toLowerCase();
+            let transcribedText = '';
+            
+            // Простая транскрипция (упрощенная версия)
+            for (let i = 0; i < russianText.length; i++) {
+                let found = false;
                 
-                result.push({
-                    type: 'tag',
-                    content: match[0]
-                });
-                
-                currentIndex = match.index + match[0].length;
-            }
-            
-            if (currentIndex < html.length) {
-                result.push({
-                    type: 'text',
-                    content: html.substring(currentIndex)
-                });
-            }
-            
-            return result;
-        }
-        
-        // Функция замены текста на кану
-        function replaceWithKana(html, kanaType) {
-            const parts = parseHTML(html);
-            const result = [];
-            
-            for (const part of parts) {
-                if (part.type === 'tag') {
-                    result.push(part.content);
-                } else {
-                    const words = splitTextIntoWords(part.content);
-                    
-                    for (const word of words) {
-                        if (word.type === 'word') {
-                            result.push(processWord(word.content, kanaType));
-                        } else {
-                            result.push(word.content);
+                // Проверяем двухбуквенные слоги
+                if (i < russianText.length - 1) {
+                    const twoChars = russianText.substr(i, 2);
+                    if (polyvanovTable[twoChars] && selectedKana.has(twoChars)) {
+                        let kana = polyvanovTable[twoChars];
+                        if (kanaType === 'katakana') {
+                            kana = katakanaTable[kana] || kana;
+                        } else if (kanaType === 'mixed') {
+                            // Для смешанного типа используем катакану для иностранных слов
+                            kana = Math.random() > 0.5 ? katakanaTable[kana] || kana : kana;
                         }
+                        transcribedText += kana;
+                        i++; // Пропускаем второй символ
+                        stats.replacedChars++;
+                        found = true;
                     }
                 }
+                
+                // Проверяем одиночные символы
+                if (!found && polyvanovTable[russianText[i]] && selectedKana.has(russianText[i])) {
+                    let kana = polyvanovTable[russianText[i]];
+                    if (kanaType === 'katakana') {
+                        kana = katakanaTable[kana] || kana;
+                    }
+                    transcribedText += kana;
+                    stats.replacedChars++;
+                    found = true;
+                }
+                
+                if (!found) {
+                    transcribedText += russianText[i];
+                }
             }
             
-            return result.join('');
+            result = transcribedText;
+            
+            // Добавление кандзи (упрощенная версия)
+            if (kanjiLevel > 0) {
+                const levelKanji = kanjiDictionary.filter(k => k.level <= kanjiLevel);
+                let kanjiText = result;
+                
+                // Простая замена некоторых слов на кандзи (для демонстрации)
+                levelKanji.forEach(kanji => {
+                    kanji.meanings.forEach(meaning => {
+                        const regex = new RegExp(meaning, 'gi');
+                        if (regex.test(kanjiText)) {
+                            kanjiText = kanjiText.replace(regex, 
+                                `<span class="kanji-hint level-${kanji.level}" data-kanji="${kanji.kanji}" data-meaning="${kanji.meanings.join(', ')}" data-reading="${kanji.furigana}">${kanji.kanji}</span>`
+                            );
+                            stats.kanjiCount++;
+                        }
+                    });
+                });
+                
+                result = kanjiText;
+            }
+            
+            // Отображение результата
+            document.getElementById('output-text').innerHTML = preserveLineBreaks(result);
+            
+            // Отображение статистики
+            document.getElementById('stats').innerHTML = `
+                Всего символов: ${stats.totalChars} | 
+                Заменено: ${stats.replacedChars} | 
+                Кандзи: ${stats.kanjiCount}
+            `;
+            
+            // Добавление обработчиков для подсказок кандзи
+            document.querySelectorAll('.kanji-hint').forEach(element => {
+                element.addEventListener('mouseenter', function(e) {
+                    const tooltip = document.getElementById('tooltip');
+                    tooltip.innerHTML = `
+                        <strong>${this.dataset.kanji}</strong><br>
+                        Значение: ${this.dataset.meaning}<br>
+                        Чтение: ${this.dataset.reading}
+                    `;
+                    tooltip.style.left = (e.pageX + 10) + 'px';
+                    tooltip.style.top = (e.pageY + 10) + 'px';
+                    tooltip.style.display = 'block';
+                });
+                
+                element.addEventListener('mouseleave', function() {
+                    document.getElementById('tooltip').style.display = 'none';
+                });
+            });
+            
+            // Активируем вкладку чтения
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector('.tab[data-tab="reading"]').classList.add('active');
+            document.getElementById('reading-tab').classList.add('active');
         }
         
+		
         // Универсальная функция переключения вкладок
         function switchToTab(tabName) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -2921,300 +3056,62 @@
                 behavior: 'smooth'
             });
         }        
-        
-        // Основная функция обработки текста
-        function processText() {
-            const inputText = document.getElementById('input-text').value;
-            const kanjiLevel = parseInt(document.getElementById('kanji-level').value);
-            const kanaType = document.getElementById('kana-type').value;
-            
-            if (!inputText.trim()) {
-                alert('Пожалуйста, выберите или загрузите текст для обработки.');
-                return;
-            }
-            
-            const kanjiResult = replaceWithKanji(inputText, kanjiLevel);
-            const finalResult = preserveLineBreaks(replaceWithKana(kanjiResult.text, kanaType));
-            
-            document.getElementById('output-text').innerHTML = finalResult;
-            addTooltipHandlers();
-            
-            document.getElementById('stats').textContent = 
-                `Заменено кандзи: ${kanjiResult.stats.replaced} из ${kanjiResult.stats.total} слов (${kanjiResult.stats.percentage}%)`;
-            
-            switchToTab('reading');
-        }
-        
-        function renderKanjiList(yearFilter = 'all') {
-            const container = document.getElementById('kanji-list-content');
-            container.innerHTML = '';
-            
-            // Фильтруем кандзи по году
-            const filteredKanji = kanjiDictionary.filter(kanji => {
-                if (yearFilter === 'all') return true;
-                return kanji.level === parseInt(yearFilter);
-            });
-            
-            if (filteredKanji.length === 0) {
-                container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #7f8c8d;">Кандзи не найдены</div>';
-                return;
-            }
-            
-            // Сортируем кандзи по уровню и алфавиту
-            /*filteredKanji.sort((a, b) => {
-                if (a.level !== b.level) return a.level - b.level;
-                return (a.meanings[0] || '').localeCompare(b.meanings[0] || '');
-            });*/
-            
-            // Отображаем кандзи
-            filteredKanji.forEach(kanji => {
-                const kanjiItem = document.createElement('div');
-                kanjiItem.className = 'kanji-item';
-                
-                // Выбираем цвет бейджа в зависимости от уровня
-                const badgeClass = `level-${kanji.level}-badge`;
-                
-                // Формируем строку с чтениями
-                let readingsHTML = '';
-                if (kanji.readings.on && kanji.readings.on.length > 0) {
-                    readingsHTML += `<span class="reading-on">${kanji.readings.on.slice(0, 2).join(', ')}</span>`;
-                }
-                if (kanji.readings.kun && kanji.readings.kun.length > 0) {
-                    if (readingsHTML) readingsHTML += ' / ';
-                    readingsHTML += `<span class="reading-kun">${kanji.readings.kun.slice(0, 2).join(', ')}</span>`;
-                }
-                
-                kanjiItem.innerHTML = `
-                    <div class="kanji-char">${kanji.kanji}</div>
-                     <div class="kanji-readings">${readingsHTML}</div>
-                    <div class="kanji-meaning">${kanji.meanings[0] || ''}</div>
-                `;
-                
-                container.appendChild(kanjiItem);
-            });
-        }
-        
-        // Функция для отображения фраз в разговорнике
-        function renderPhrasebook(searchTerm = '') {
-            const phrasesList = document.getElementById('phrases-list');
-            phrasesList.innerHTML = '';
-            
-            const filteredPhrases = phrasebookData.filter(phrase => {
-                if (!searchTerm) return true;
-                
-                const searchLower = searchTerm.toLowerCase();
-                return (
-                    phrase.russian.toLowerCase().includes(searchLower) ||
-                    phrase.japanese.toLowerCase().includes(searchLower) ||
-                    phrase.romaji.toLowerCase().includes(searchLower) ||
-                    phrase.kiriji.toLowerCase().includes(searchLower)
-                );
-            });
-            
-            if (filteredPhrases.length === 0) {
-                phrasesList.innerHTML = '<div class="no-results">Фразы не найдены</div>';
-                return;
-            }
-            
-            filteredPhrases.forEach(phrase => {
-                const phraseElement = document.createElement('div');
-                phraseElement.className = 'phrase-item';
-                
-                phraseElement.innerHTML = `
-                    <div class="phrase-line phrase-russian">${phrase.russian}</div>
-                    <div class="phrase-line phrase-japanese">${phrase.japanese}</div>
-                    <div class="phrase-line phrase-romaji">${phrase.romaji}</div>
-                    <div class="phrase-line phrase-kiriji">${phrase.kiriji}</div>
-                `;
-                
-                phrasesList.appendChild(phraseElement);
-            });
-        }
-        
-        // Добавление обработчиков для подсказок
-        function addTooltipHandlers() {
-            const tooltip = document.getElementById('tooltip');
-            const kanjiElements = document.querySelectorAll('.kanji-hint');
-            
-            kanjiElements.forEach(element => {
-                element.addEventListener('mouseenter', function(e) {
-                    const rect = this.getBoundingClientRect();
-                    tooltip.style.left = (rect.left + window.scrollX) + 'px';
-                    tooltip.style.top = (rect.bottom + window.scrollY + 5) + 'px';
-                    
-                    tooltip.innerHTML = `
-                        <strong>${this.dataset.kanji}</strong><br>
-                        <em>${this.dataset.meanings}</em><br>
-                        Он: ${this.dataset.readingsOn}<br>
-                        Кун: ${this.dataset.readingsKun}<br>
-                        Уровень: ${this.dataset.level} класс
-                    `;
-                    
-                    tooltip.style.display = 'block';
-                });
-                
-                element.addEventListener('mouseleave', function() {
-                    tooltip.style.display = 'none';
-                });
-            });
-        }
-        
-        // Загрузка файла
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('input-text').value = e.target.result;
-                processText();
-            };
-            reader.readAsText(file);
-        }
 		
-		// Функция для поиска кандзи по русскому значению
-		function searchKanjiByRussian(searchText) {
-			if (!searchText || searchText.trim() === '') {
-				return [];
-			}
-			
-			const searchLower = searchText.toLowerCase().trim();
-			const results = [];
-			
-			kanjiDictionary.forEach(kanji => {
-				// Ищем в массиве значений
-				for (const meaning of kanji.meanings) {
-					if (meaning.toLowerCase().includes(searchLower)) {
-						results.push(kanji);
-						break; // Не добавляем один и тот же кандзи несколько раз
-					}
-				}
-			});
-			
-			return results;
-		}
-
-		// Функция для отображения результатов поиска
-		function displaySearchResults(results) {
-			const resultsContainer = document.getElementById('kanji-search-results');
-			
-			if (!results || results.length === 0) {
-				resultsContainer.innerHTML = '<div class="no-results">Не найдено</div>';
-				resultsContainer.style.display = 'block';
-				return;
-			}
-			
-			let html = '';
-			results.forEach(kanji => {
-				const levelClass = `level-${kanji.level}-badge`;
-				
-				html += `
-					<div class="kanji-item">
-						<div class="kanji-char">${kanji.kanji}</div>
-						<div class="kanji-furigana">${kanji.furigana || ''}</div>
-						<div class="kanji-kiriji">${kanji.kiriji || ''}</div>
-						<div class="kanji-meaning">${kanji.meanings.join(', ')}</div>
-						<div class="level-badge ${levelClass}">${kanji.level} класс</div>
-					</div>
-				`;
-			});
-			
-			resultsContainer.innerHTML = html;
-			resultsContainer.style.display = 'grid';
-		}
-
-		// Обработчик ввода в поле поиска
-		function setupKanjiSearch() {
-			const searchInput = document.getElementById('kanji-search-input');
-			const searchResults = document.getElementById('kanji-search-results');
-			
-			if (!searchInput) return;
-			
-			// Дебаунс для поиска
-			let searchTimeout;
-			searchInput.addEventListener('input', function() {
-				clearTimeout(searchTimeout);
-				
-				const searchText = this.value;
-				
-				if (searchText.trim() === '') {
-					searchResults.style.display = 'none';
-					searchResults.innerHTML = '';
-					return;
-				}
-				
-				searchTimeout = setTimeout(() => {
-					const results = searchKanjiByRussian(searchText);
-					displaySearchResults(results);
-				}, 300); // Задержка 300мс
-			});
-			
-			// Очистка при клике вне поля поиска
-			document.addEventListener('click', function(e) {
-				if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-					if (searchInput.value.trim() === '') {
-						searchResults.style.display = 'none';
-						searchResults.innerHTML = '';
-					}
-				}
-			});
-			
-			// Фокус на поле поиска
-			searchInput.addEventListener('focus', function() {
-				if (this.value.trim() !== '') {
-					const results = searchKanjiByRussian(this.value);
-					displaySearchResults(results);
-				}
-			});
-		}
-
-		// Инициализация поиска при загрузке страницы
-		document.addEventListener('DOMContentLoaded', function() {
-			// Вызываем после загрузки данных кандзи
-			setTimeout(setupKanjiSearch, 500);
-		});		
-        
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
+            // Загрузка данных
             loadKanjiData();
             generateFuriganaForKanji();
             createKanaTable();
-            renderPhrasebook();
-            renderKanaTable('hiragana');
+            renderKanaTable();
             renderKanjiList('all');
+            renderPhrasebook();
+			
+			switchToTab('settings');
             
-            switchToTab('settings');
-            
-            document.getElementById('process-btn').addEventListener('click', processText);
-            
+            // Обработчики табов
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', function() {
-                    switchToTab(this.dataset.tab);
+                    const tabId = this.dataset.tab;
+					
+					switchToTab(this.dataset.tab);
                     
-                    if (this.dataset.tab === 'kana-table') {
-                        document.getElementById('show-hiragana').classList.add('active');
-                        document.getElementById('show-katakana').classList.remove('active');
+                    // Скрываем все табы
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Показываем выбранный таб
+                    this.classList.add('active');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                    
+                    // Особые действия для некоторых табов
+                    if (tabId === 'kana-table') {
                         renderKanaTable('hiragana');
-                    } else if (this.dataset.tab === 'kanji-list') {
-                        document.querySelectorAll('.kanji-year-selector button').forEach(btn => {
-                            btn.classList.remove('active');
-                        });
-                        document.querySelector('.kanji-year-selector button[data-year="all"]').classList.add('active');
-                        renderKanjiList('all');
                     }
                 });
             });
             
+            // Обработчик выбора текста
             document.getElementById('text-selector').addEventListener('change', function() {
-                const selectedText = sampleTexts[this.value];
-                if (selectedText) {
-                    document.getElementById('input-text').value = selectedText;
-                    processText();
+                const textKey = this.value;
+                if (textKey in sampleTexts) {
+                    document.getElementById('input-text').value = sampleTexts[textKey].trim();
                 }
             });
             
-            document.getElementById('file-input').addEventListener('change', handleFileSelect);
+            // Обработчик загрузки файла
+            document.getElementById('file-input').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('input-text').value = e.target.result;
+                    };
+                    reader.readAsText(file);
+                }
+            });
             
+            // Кнопки выбора каны
             document.getElementById('select-all-kana').addEventListener('click', function() {
                 document.querySelectorAll('.kana-item').forEach(item => {
                     item.classList.add('selected');
@@ -3229,75 +3126,85 @@
                 });
             });
             
-            document.getElementById('phrase-search').addEventListener('input', function() {
-                renderPhrasebook(this.value);
-            });
+            // Основная кнопка обработки
+            document.getElementById('process-btn').addEventListener('click', processText);
             
+            // Обработчики для таблицы каны
             document.getElementById('show-hiragana').addEventListener('click', function() {
-                document.getElementById('show-hiragana').classList.add('active');
-                document.getElementById('show-katakana').classList.remove('active');
+                document.querySelectorAll('.kana-type-selector button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
                 renderKanaTable('hiragana');
             });
             
             document.getElementById('show-katakana').addEventListener('click', function() {
-                document.getElementById('show-hiragana').classList.remove('active');
-                document.getElementById('show-katakana').classList.add('active');
+                document.querySelectorAll('.kana-type-selector button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
                 renderKanaTable('katakana');
             });
             
+            // Обработчики для списка кандзи
             document.querySelectorAll('.kanji-year-selector button').forEach(button => {
                 button.addEventListener('click', function() {
-                    document.querySelectorAll('.kanji-year-selector button').forEach(btn => {
-                        btn.classList.remove('active');
-                    });
-                    
+                    document.querySelectorAll('.kanji-year-selector button').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
                     renderKanjiList(this.dataset.year);
                 });
             });
             
-            document.getElementById('input-text').value = sampleTexts.text1;
+            // Поиск кандзи
+            document.getElementById('kanji-search-input').addEventListener('input', function(e) {
+                searchKanji(e.target.value);
+            });
+            
+            // Поиск фраз в разговорнике
+            document.getElementById('phrase-search').addEventListener('input', function(e) {
+                renderPhrasebook(e.target.value);
+            });
+            
+            // Обработчик кнопки установки PWA
+            document.getElementById('installPWA').addEventListener('click', function() {
+                if (window.deferredPrompt) {
+                    window.deferredPrompt.prompt();
+                    window.deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('Приложение установлено');
+                        }
+                        window.deferredPrompt = null;
+                    });
+                } else {
+                    alert('Установка доступна только в поддерживаемых браузерах. На iOS используйте "Добавить на главный экран" в меню браузера.');
+                }
+            });
+            
+            // PWA функциональность
+            let deferredPrompt;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                document.getElementById('installButton').style.display = 'block';
+            });
+            
+            document.getElementById('installButton').addEventListener('click', function() {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('Приложение установлено');
+                        }
+                        deferredPrompt = null;
+                    });
+                }
+            });
+            
+            // Выбираем первый текст по умолчанию
+            document.getElementById('input-text').value = sampleTexts.text1.trim();
+            
+            // Инициализируем выбранную кану (все символы по умолчанию)
+            document.querySelectorAll('.kana-item').forEach(item => {
+                item.classList.add('selected');
+                selectedKana.add(item.dataset.romaji);
+            });
         });
-		
-		 if ('serviceWorker' in navigator) {
-			window.addEventListener('load', function() {
-			  // Регистрируем Service Worker, указав путь к файлу sw.js
-			  navigator.serviceWorker.register('sw.js')
-				.then(function(registration) {
-				  console.log('ServiceWorker зарегистрирован успешно: ', registration.scope);
-				})
-				.catch(function(error) {
-				  console.log('Ошибка регистрации ServiceWorker: ', error);
-				});
-			});
-		  }	
-
-		if (/Android|iPhone|iPad/.test(navigator.userAgent)) {
-		  let deferredPrompt;
-		  const installBtn = document.getElementById('installButton');
-		  
-		  window.addEventListener('beforeinstallprompt', (e) => {
-			// Предотвращаем автоматический показ баннера
-			e.preventDefault();
-			deferredPrompt = e;
-			
-			// Показываем свою кнопку
-			installBtn.style.display = 'block';
-			
-			installBtn.addEventListener('click', () => {
-			  // Показываем нативный баннер установки
-			  deferredPrompt.prompt();
-			  
-			  deferredPrompt.userChoice.then((choiceResult) => {
-				if (choiceResult.outcome === 'accepted') {
-				  console.log('Пользователь установил PWA');
-				}
-				deferredPrompt = null;
-			  });
-			});
-		  });
-		}		  
-		
     </script>
 </body>
 </html>
