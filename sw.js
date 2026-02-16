@@ -1,60 +1,63 @@
-// Имя кеша для текущей версии приложения
-const CACHE_NAME = 'jap-lang-v1';
-// Список всех необходимых для офлайн-работы файлов
+// МЕНЯЕМ ИМЯ КЕША ПРИ КАЖДОМ ОБНОВЛЕНИИ!
+const CACHE_NAME = 'jap-lang-v2'; // <-- УВЕЛИЧЬТЕ ВЕРСИЮ!
+
+// Базовые файлы для офлайн-доступа (минимум)
 const STATIC_ASSETS = [
-  './', // Основная страница
+  './',
   'index.html',
-  // Добавьте сюда пути ко всем CSS, JS, шрифтам и критически важным изображениям
-  // Например: '/jap-lang/css/style.css', '/jap-lang/js/app.js'
+  // Добавьте критические CSS/JS
 ];
 
-// Событие 'install': кешируем статические ресурсы при первой установке
+// Установка: кешируем минимум и активируемся сразу
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(STATIC_ASSETS))
-      .then(() => self.skipWaiting()) // Активируем SW сразу после установки
+      .then(() => self.skipWaiting())
   );
 });
 
-// Событие 'activate': очищаем старые кеши при обновлении приложения
+// Активация: удаляем старые кеши и берем управление
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cache => {
           if (cache !== CACHE_NAME) {
-            return caches.delete(cache); // Удаляем все кеши, кроме текущего
+            console.log('Удаляем старый кеш:', cache);
+            return caches.delete(cache);
           }
         })
       );
-    }).then(() => self.clients.claim()) // Берем управление всеми открытыми вкладками
+    }).then(() => self.clients.claim())
   );
 });
 
-// Событие 'fetch': стратегия "Сначала из кеша, потом сеть" для офлайн-работы
+// 🚀 НОВАЯ СТРАТЕГИЯ: Stale-While-Revalidate
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Если файл найден в кеше, возвращаем его
-        if (response) {
-          return response;
-        }
-        // Если нет в кеше, загружаем из сети
-        return fetch(event.request)
-          .then(networkResponse => {
-            // По желанию: можно кешировать новые запросы для будущего использования
-            // return caches.open(CACHE_NAME).then(cache => {
-            //   cache.put(event.request, networkResponse.clone());
-            //   return networkResponse;
-            // });
-            return networkResponse;
-          })
-          .catch(() => {
-            // Если сеть недоступна и файла нет в кеше, можно показать запасную страницу
-            // Например: return caches.match('/jap-lang/offline.html');
-          });
-      })
+    caches.match(event.request).then(cachedResponse => {
+      // Создаём запрос в сеть для обновления кеша
+      const fetchPromise = fetch(event.request)
+        .then(networkResponse => {
+          // Проверяем, что ответ валидный
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+            // Клонируем и сохраняем в кеш
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(error => {
+          console.log('Сеть недоступна, используем только кеш:', error);
+          // Если сеть упала, а в кеше ничего нет - можно вернуть fallback
+          return caches.match('/offline.html');
+        });
+
+      // ✅ Отдаем из кеша сразу (если есть) или ждем ответ от сети
+      return cachedResponse || fetchPromise;
+    })
   );
 });
